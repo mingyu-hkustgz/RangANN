@@ -1,0 +1,6 @@
+DATA
+cmake-build-debug
+*.fvecs
+*.ivecs
+*.bin
+*.index
