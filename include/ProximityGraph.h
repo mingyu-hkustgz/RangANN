@@ -51,7 +51,6 @@ namespace PGraph {
                     Q.pop();
                 }
             }
-            std::cout<<"start occlude"<<std::endl;
             rng_edge_occlude();
         }
 
@@ -73,14 +72,12 @@ namespace PGraph {
                     cur_tag++;
                 }
             }
-            std::cout<<"occlude finsihed"<<std::endl;
             DistanceGraph().swap(dist_graph_);
             CompactGraph().swap(temp_graph_);
         }
 
 
         void merge_build(PGraph *left_graph, PGraph *right_graph) {
-            std::cout<<" merge <-> "<<std::endl;
             unsigned L = left_graph->offset, R = right_graph->offset + right_graph->nd_ - 1;
             temp_graph_.resize(nd_);
             dist_graph_.resize(nd_);

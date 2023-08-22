@@ -75,17 +75,20 @@ int main(int argc, char *argv[]) {
     int *ground_data;
     load_int_data(groundtruth_path, ground_data, ground_num, ground_dim);
 
-    auto index = new Segment::SegmentTree(0, points_num, data,dim, 256, 512);
-    auto root = index->build_segment_graph(0, points_num);
+    auto index = new Segment::SegmentTree(0, points_num, data,dim, 256, 256);
+    auto root = index->build_segment_graph(0, points_num-1);
     double recall = 0.0;
+    K = 100;
     for (int i = 0; i < query_num; i++) {
         SegQuery Q;
         std::vector<std::pair<float, unsigned> > ans;
         Q.data_ = query_data + i * query_dim;
-        Q.L = 0;
-        Q.R = points_num;
-        root->range_search(Q, 100, 10, ans);
-        recall += test_recall(ans, ground_data + i * ground_dim, K);
+        Q.L = points_num/3;
+        Q.R = points_num-1;
+        root->range_search(Q, 100, 100, ans);
+        double temp_recall = test_recall(ans, ground_data + i * ground_dim, K);
+        recall += temp_recall;
+        std::cout<<temp_recall<<endl;
     }
     recall/=query_num;
     std::cout<<"recall:: "<<recall<<endl;

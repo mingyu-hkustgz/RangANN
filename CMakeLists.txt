@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 project(RangANN)
 
 include_directories(include)
@@ -13,6 +13,15 @@ if (OPENMP_FOUND)
 else()
     message(FATAL_ERROR "no OpenMP supprot")
 endif()
+
+set(BOOST_ROOT "D:/software/boost_1_78_0")
+
+#添加头文件搜索路径
+include_directories(D:/software/boost_1_78_0/)
+include_directories(D:/software/eigen-3.4.0)
+#/添加库文件搜索路径
+link_directories(D:/software/boost_1_78_0/libs)
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 

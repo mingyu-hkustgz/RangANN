@@ -53,17 +53,12 @@ namespace Segment {
             std::cout << "build begin:: " << L << " " << mid << " " << R << std::endl;
             temp_root->compact_graph = new PGraph::PGraph(L, R, dimension_, width);
             temp_root->compact_graph->data_ = data_;
-            std::cout << " graph begin " << std::endl;
             if (temp_root->left_child != nullptr && temp_root->right_child != nullptr) {
-                std::cout << " merge begin " << std::endl;
                 temp_root->compact_graph->merge_build(temp_root->left_child->compact_graph,
                                                       temp_root->right_child->compact_graph);
             } else {
-                std::cout << " brute force begin" << std::endl;S
                 temp_root->compact_graph->bruteforce_build();
             }
-
-            std::cout << "build finished:: " << L << " " << R << std::endl;
             return temp_root;
         }
 
@@ -95,8 +90,14 @@ namespace Segment {
             }
             unsigned mid = (Left_Range + Right_Range) >> 1;
             std::vector<std::pair<float, unsigned >> left_ans, right_ans;
-            if (Left_Range <= mid) left_child->range_search(Q, pool_size, K, left_ans);
-            if (Right_Range > mid) right_child->range_search(Q, pool_size, K, right_ans);
+            if (Q.L <= mid) {
+                if (left_child != nullptr) left_child->range_search(Q, pool_size, K, left_ans);
+                else bruteforce_range_search(Q.data_, Q.L, mid, K, left_ans);
+            }
+            if (Q.R > mid) {
+                if (right_child != nullptr) right_child->range_search(Q, pool_size, K, right_ans);
+                else bruteforce_range_search(Q.data_, mid + 1, Q.R, K, right_ans);
+            }
             ans = merge_sort(left_ans, right_ans, K);
         }
     };
