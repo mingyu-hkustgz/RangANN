@@ -100,6 +100,19 @@ namespace Segment {
             }
             ans = merge_sort(left_ans, right_ans, K);
         }
+//
+//        void save_index(char *filename,unsigned L,uns){
+//            std::ofstream out(filename, std::ios::binary);
+//            out.write((char*) &nd_,sizeof(unsigned));
+//            out.write((char*) &width,sizeof(unsigned));
+//            out.write((char*) &block_bound,sizeof(unsigned));
+//            out.write((char*) &dimension_,sizeof(unsigned));
+//
+//        }
+//
+//        void load_index(char* filename){
+//
+//        }
     };
 
 }
