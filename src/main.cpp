@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
     int *ground_data;
     load_int_data(groundtruth_path, ground_data, ground_num, ground_dim);
 
-    auto index = new Segment::SegmentTree(0, points_num, data, dim, 100, 512);
+    auto index = new Segment::SegmentTree(0, points_num, data);
     auto root = index->build_segment_graph(0, points_num - 1);
     K = 1;
     for (int i = 0; i < query_num; i++) {
