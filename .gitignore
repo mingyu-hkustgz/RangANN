@@ -1,5 +1,7 @@
 DATA
 cmake-build-debug
+.idea
+__pycache__
 *.fvecs
 *.ivecs
 *.bin

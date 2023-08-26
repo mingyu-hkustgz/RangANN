@@ -51,6 +51,18 @@ struct Neighbor {
     }
 };
 
+struct SegQuery {
+    SegQuery(unsigned left_range, unsigned right_range, float *data) {
+        L = left_range;
+        R = right_range;
+        data_ = data;
+    }
+    unsigned L, R;
+    float *data_;
+};
+
+typedef std::vector<std::pair<float, unsigned>> ResultPool;
+
 #define RANGANN_UTILS_H
 
 
