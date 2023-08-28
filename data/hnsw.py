@@ -6,7 +6,7 @@ import argparse
 from tqdm import tqdm
 from utils import fvecs_read, fvecs_write
 
-source = '/home/BLD/mingyu/DATA/vector_data'
+source = 'D:\\DATA\\vector_data'
 # the number of clusters
 K = 256
 M = 32
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     data_path = os.path.join(path, f'{dataset}_base.fvecs')
     np.random.seed(random_seed)
 
-    save_path = f"./DATA/faiss_{dataset}.hnsw"
+    save_path = f"faiss_{dataset}.hnsw"
     base = fvecs_read(data_path)
 
     with open(segment_path) as f:

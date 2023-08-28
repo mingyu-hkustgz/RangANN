@@ -31,6 +31,7 @@ namespace Segment {
         SegmentTree *build_segment_tree(unsigned L, unsigned R) {
             auto temp_root = new SegmentTree(L, R);
             Segments.emplace_back(L, R);
+            std::cerr<<L<<" "<<R<<std::endl;
             if (temp_root->nd_ / fan_out >= block_bound) {
                 temp_root->children = new SegmentTree *[fan_out];
                 unsigned length = temp_root->nd_ / fan_out;

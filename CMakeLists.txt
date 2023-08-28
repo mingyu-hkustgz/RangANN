@@ -15,7 +15,11 @@ if (OPENMP_FOUND)
 else()
     message(FATAL_ERROR "no OpenMP supprot")
 endif()
-
+#添加头文件搜索路径
+include_directories(D:/software/boost_1_78_0/)
+include_directories(D:/software/eigen-3.4.0)
+#/添加库文件搜索路径
+link_directories(D:/software/boost_1_78_0/libs)
 
 add_definitions (-std=c++11 -Ofast -lboost -march=native -Wall -DINFO)
 

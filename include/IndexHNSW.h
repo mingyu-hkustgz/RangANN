@@ -128,7 +128,8 @@ namespace Index {
                 else
                     ++k;
             }
-            unsigned ans_size = std::min((unsigned long) K, ans_queue.size());
+            unsigned ans_size = ans_queue.size();
+            if(ans_size > K)  ans_size = K;
             ans.resize(K);
             for (int i = (int) ans_size - 1; i >= 0; i--) {
                 ans[i] = ans_queue.top();

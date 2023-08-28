@@ -46,21 +46,17 @@ int main(int argc, char *argv[]) {
     char index_path[256] = "";
     char query_path[256] = "";
     char segment_path[256] = "";
-    char groundtruth_path[256] = "";
     char dataset[256] = "";
     int K = 10, efSearch;
 
     while (iarg != -1) {
-        iarg = getopt_long(argc, argv, "i:q:g:n:s:k:r:", longopts, &ind);
+        iarg = getopt_long(argc, argv, "i:q:n:s:k:r:", longopts, &ind);
         switch (iarg) {
             case 'i':
                 if (optarg)strcpy(index_path, optarg);
                 break;
             case 'q':
                 if (optarg)strcpy(query_path, optarg);
-                break;
-            case 'g':
-                if (optarg)strcpy(groundtruth_path, optarg);
                 break;
             case 'n':
                 if (optarg)strcpy(dataset, optarg);
@@ -82,9 +78,6 @@ int main(int argc, char *argv[]) {
     unsigned query_num, query_dim;
     float *query_data;
     load_float_data(query_path, query_data, query_num, query_dim);
-    unsigned ground_num, ground_dim;
-    int *ground_data;
-    load_int_data(groundtruth_path, ground_data, ground_num, ground_dim);
     Segment::SegmentTree::dimension_ = dim;
     Segment::SegmentTree::data_ = data;
     Index::Index::dimension = dim;
@@ -93,7 +86,10 @@ int main(int argc, char *argv[]) {
 
     auto root = index->build_segment_tree(0, points_num - 1);
     root->save_segment(segment_path);
-    std::ifstream fin("./DATA/faiss_sift.hnsw", std::ios::binary);
+
+    std::string save_index = ".\\DATA\\faiss_sift.hnsw";
+    if(!isFileExists_ifstream(save_index.c_str())) return 0;
+    std::ifstream fin(save_index.c_str(), std::ios::binary);
     root->load_segment_index(fin, "hnsw");
     fin.close();
     srand(0);
@@ -102,8 +98,8 @@ int main(int argc, char *argv[]) {
     K = 10;
     std::cerr << "test begin" << std::endl;
     for (int i = 0; i < 1000; i++) {
-        unsigned L = points_num /15;
-        unsigned R = points_num / 6;
+        unsigned L = points_num / 213;
+        unsigned R = points_num / 57;
         SegQuery Q(L, R, query_data + i * dim);
         ResultPool ans1, ans2, ans3;
 
