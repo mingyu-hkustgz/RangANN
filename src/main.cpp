@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "Segment.h"
 #include <getopt.h>
-
+#define count_dist
 using namespace std;
 
 
@@ -20,8 +20,8 @@ double test_recall(std::vector<std::pair<float, unsigned >> ans, int *gt, unsign
     return recall;
 }
 
-unsigned Segment::SegmentTree::block_bound = 1000;
-unsigned Segment::SegmentTree::fan_out = 10;
+unsigned Segment::SegmentTree::block_bound = 256;
+unsigned Segment::SegmentTree::fan_out = 8;
 unsigned Segment::SegmentTree::dimension_ = 0;
 float *Segment::SegmentTree::data_ = nullptr;
 std::vector<std::pair<unsigned, unsigned> > Segment::SegmentTree::Segments;
@@ -87,24 +87,26 @@ int main(int argc, char *argv[]) {
     auto root = index->build_segment_tree(0, points_num - 1);
     root->save_segment(segment_path);
 
-    std::string save_index = ".\\DATA\\faiss_sift.hnsw";
-    if(!isFileExists_ifstream(save_index.c_str())) return 0;
-    std::ifstream fin(save_index.c_str(), std::ios::binary);
+    if(!isFileExists_ifstream(index_path)) return 0;
+    std::ifstream fin(index_path, std::ios::binary);
     root->load_segment_index(fin, "hnsw");
     fin.close();
     srand(0);
     double segment_recall = 0.0, filter_recall = 0.0;
     double all_index_search_time = 0.0, all_brute_search_time = 0.0, all_filter_search_time = 0.0;
-    K = 10;
+    K = 1;
+    unsigned brute_node_calc = 0;
     std::cerr << "test begin" << std::endl;
-    for (int i = 0; i < 1000; i++) {
-        unsigned L = points_num / 213;
-        unsigned R = points_num / 57;
+    for (int i = 0; i < query_num; i++) {
+        unsigned L = rand()  % points_num;
+        unsigned R = (rand() % points_num + L);
+        if(R>= points_num) R = points_num-1;
+        brute_node_calc += (R-L+1);
         SegQuery Q(L, R, query_data + i * dim);
         ResultPool ans1, ans2, ans3;
 
         auto s = chrono::high_resolution_clock::now();
-        root->range_search(Q, 50, K, ans1);
+        root->range_search(Q, 128, K, ans1);
         auto e = chrono::high_resolution_clock::now();
         chrono::duration<double> diff = e - s;
         double time_slap1 = diff.count();
@@ -143,8 +145,10 @@ int main(int argc, char *argv[]) {
         all_filter_search_time += time_slap3;
 //        std::cerr<<recall<<endl;
     }
-    std::cerr << " segment recall:: " << segment_recall / 1000 << std::endl;
-    std::cerr << " filter recall:: " << filter_recall / 1000 << std::endl;
+    std::cerr<<"ave length:: "<<brute_node_calc/query_num<<std::endl;
+    std::cerr<<index_dist_calc<<" "<<brute_node_calc<<" "<<filter_dist_calc<<std::endl;
+    std::cerr << " segment recall:: " << segment_recall / query_num << std::endl;
+    std::cerr << " filter recall:: " << filter_recall / query_num << std::endl;
     std::cerr << "index time:: " << all_index_search_time << " brute search time:: " << all_brute_search_time<<" filter search time:: "<<all_filter_search_time << endl;
 
     return 0;

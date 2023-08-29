@@ -103,11 +103,14 @@ namespace Segment {
                 for (int i = 0; i < fan_out; i++) {
                     if (check_overlap(Q, children[i]->Left_Range, children[i]->Right_Range)) {
                         std::vector<std::pair<float, unsigned >> cur_ans;
-                        children[i]->range_search(Q, pool_size, K, cur_ans);
+                        children[i]->range_search(Q, std::max(pool_size>>1,(unsigned) 1), K, cur_ans);
                         ans = merge_sort(ans, cur_ans, K);
                     }
                 }
             } else {
+#ifdef count_dist
+                index_dist_calc += std::min(Q.R, Right_Range) - std::max(Q.L, Left_Range) + 1;
+#endif
                 bruteforce_range_search(Q.data_, std::max(Q.L, Left_Range), std::min(Q.R, Right_Range), K, ans);
             }
         }

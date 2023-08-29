@@ -37,6 +37,9 @@
 
 #ifndef RANGANN_UTILS_H
 
+unsigned index_dist_calc = 0;
+unsigned filter_dist_calc = 0;
+
 struct Neighbor {
     unsigned id;
     float distance;

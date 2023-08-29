@@ -4,7 +4,7 @@
 
 #ifndef RANGANN_INDEXHNSW_H
 #define RANGANN_INDEXHNSW_H
-
+#define count_dist
 #include "Index.h"
 
 namespace Index {
@@ -24,6 +24,9 @@ namespace Index {
 
         void naive_search(const float *query, unsigned int K, unsigned int nprobs, ResultPool &ans) override {
             unsigned currObj = ep_;
+#ifdef count_dist
+            index_dist_calc++;
+#endif
             float curdist = inner_id_dist(currObj, query);
             for (unsigned level = max_level_; level > 0; level--) {
                 bool changed = true;
@@ -54,6 +57,9 @@ namespace Index {
                     for (auto id: level_graph_[0][n]) {
                         if (flags[id]) continue;
                         flags[id] = true;
+#ifdef count_dist
+                        index_dist_calc++;
+#endif
                         float dist = inner_id_dist(id, query);
                         if (dist >= retset[dynamic_length - 1].distance && dynamic_length == nprobs) continue;
                         Neighbor nn(id, dist, true);
@@ -77,6 +83,9 @@ namespace Index {
             std::priority_queue<std::pair<float, unsigned>> ans_queue;
             unsigned currObj = ep_;
             float curdist = inner_id_dist(currObj, Q.data_);
+#ifdef count_dist
+            filter_dist_calc++;
+#endif
             for (unsigned level = max_level_; level > 0; level--) {
                 bool changed = true;
                 while (changed) {
@@ -107,6 +116,9 @@ namespace Index {
                         if (flags[id]) continue;
                         flags[id] = true;
                         float dist = inner_id_dist(id, Q.data_);
+#ifdef count_dist
+                        filter_dist_calc++;
+#endif
                         unsigned outer_id = id + Left_Range;
                         if (Q.L <= outer_id && outer_id <= Q.R) {
                             if (ans_queue.empty() || ans_queue.size() < K) ans_queue.emplace(dist, outer_id);
