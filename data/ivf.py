@@ -6,28 +6,44 @@ import argparse
 from utils import fvecs_read, fvecs_write
 
 source = '/home/BLD/mingyu/DATA/vector_data'
+random_seed = 100
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='linear regression')
     parser.add_argument('-d', '--dataset', help='dataset', default='sift')
-    parser.add_argument('-l', '--left', help='left range', default='0')
-    parser.add_argument('-r', '--right', help='right range', default='0')
-    parser.add_argument('-k', '--K', help='K centroid')
+    parser.add_argument('-s', '--segments', help='segments range', default='0')
+    parser.add_argument('-c', '--centroids', help='construct centroids')
+
+
     args = vars(parser.parse_args())
     dataset = args['dataset']
-    L = args['left']
-    R = args['right']
-    K = args['K']
+    K = int(args['centroids'])
+    segment_path = args['segments']
+    path = os.path.join(source, dataset)
+    data_path = os.path.join(path, f'{dataset}_base.fvecs')
+    np.random.seed(random_seed)
+
+    save_path = f"./DATA/faiss_{dataset}.ivf"
+    base = fvecs_read(data_path)
+    D = base.shape[1]
+
+    with open(segment_path) as f:
+        num = int(f.readline())
+        for i in range(num):
+            x, y = f.readline().split(' ')
+            L = int(x)
+            R = int(y)
+            part_base = base[L:R + 1]
+            print(f"current num :: {i}, current segment:: {L} <-> {R}")
+            index = faiss.index_factory(D, f"IVF{K},Flat")
+            index.add(part_base)
+
     print(f"Clustering - {dataset}")
     # path
     path = os.path.join(source, dataset)
-    data_path = os.path.join(path, f'{dataset}_learn.fvecs')
     centroids_path = f'./DATA/{dataset}_centroid_{K}.fvecs'
 
     # read data vectors
-    X = fvecs_read(data_path)
-    D = X.shape[1]
-    X = X[L:R]
     # cluster data vectors
     index = faiss.index_factory(D, f"IVF{K},Flat")
     index.verbose = True

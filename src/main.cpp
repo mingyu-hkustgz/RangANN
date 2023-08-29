@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "Segment.h"
 #include <getopt.h>
+
 #define count_dist
 using namespace std;
 
@@ -47,10 +48,11 @@ int main(int argc, char *argv[]) {
     char query_path[256] = "";
     char segment_path[256] = "";
     char dataset[256] = "";
-    int K = 10, efSearch;
+    char logger_path[256] = "";
+    int K = 1, efSearch = 32, length_bound;
 
     while (iarg != -1) {
-        iarg = getopt_long(argc, argv, "i:q:n:s:k:r:", longopts, &ind);
+        iarg = getopt_long(argc, argv, "i:q:n:s:k:r:b:l:", longopts, &ind);
         switch (iarg) {
             case 'i':
                 if (optarg)strcpy(index_path, optarg);
@@ -70,6 +72,10 @@ int main(int argc, char *argv[]) {
             case 'r':
                 if (optarg)strcpy(segment_path, optarg);
                 break;
+            case 'b':
+                if (optarg)length_bound = atoi(optarg);
+            case 'l':
+                if (optarg)strcpy(logger_path, optarg);
         }
     }
     unsigned points_num, dim;
@@ -87,26 +93,26 @@ int main(int argc, char *argv[]) {
     auto root = index->build_segment_tree(0, points_num - 1);
     root->save_segment(segment_path);
 
-    if(!isFileExists_ifstream(index_path)) return 0;
+    if (!isFileExists_ifstream(index_path)) return 0;
     std::ifstream fin(index_path, std::ios::binary);
     root->load_segment_index(fin, "hnsw");
     fin.close();
     srand(0);
     double segment_recall = 0.0, filter_recall = 0.0;
     double all_index_search_time = 0.0, all_brute_search_time = 0.0, all_filter_search_time = 0.0;
-    K = 1;
     unsigned brute_node_calc = 0;
     std::cerr << "test begin" << std::endl;
+    std::ofstream fout(logger_path, std::ios::app);
     for (int i = 0; i < query_num; i++) {
-        unsigned L = rand()  % points_num;
-        unsigned R = (rand() % points_num + L);
-        if(R>= points_num) R = points_num-1;
-        brute_node_calc += (R-L+1);
+        unsigned L = rand() % length_bound;
+        unsigned R = rand() % length_bound + L;
+        if (R >= points_num) R = points_num - 1;
+        brute_node_calc += (R - L + 1);
         SegQuery Q(L, R, query_data + i * dim);
         ResultPool ans1, ans2, ans3;
 
         auto s = chrono::high_resolution_clock::now();
-        root->range_search(Q, 128, K, ans1);
+        root->range_search(Q, efSearch, K, ans1);
         auto e = chrono::high_resolution_clock::now();
         chrono::duration<double> diff = e - s;
         double time_slap1 = diff.count();
@@ -118,7 +124,7 @@ int main(int argc, char *argv[]) {
         double time_slap2 = diff.count();
 
         s = chrono::high_resolution_clock::now();
-        root->index->naive_filter_search(Q, K, 500, ans3);
+        root->index->naive_filter_search(Q, K, efSearch * 4, ans3);
         e = chrono::high_resolution_clock::now();
         diff = e - s;
         double time_slap3 = diff.count();
@@ -145,11 +151,13 @@ int main(int argc, char *argv[]) {
         all_filter_search_time += time_slap3;
 //        std::cerr<<recall<<endl;
     }
-    std::cerr<<"ave length:: "<<brute_node_calc/query_num<<std::endl;
-    std::cerr<<index_dist_calc<<" "<<brute_node_calc<<" "<<filter_dist_calc<<std::endl;
-    std::cerr << " segment recall:: " << segment_recall / query_num << std::endl;
-    std::cerr << " filter recall:: " << filter_recall / query_num << std::endl;
-    std::cerr << "index time:: " << all_index_search_time << " brute search time:: " << all_brute_search_time<<" filter search time:: "<<all_filter_search_time << endl;
+    fout << "efSearch:: " << efSearch << std::endl;
+    fout << "ave length:: " << brute_node_calc / query_num << std::endl;
+    fout << index_dist_calc << " " << brute_node_calc << " " << filter_dist_calc << std::endl;
+    fout << "segment recall:: " << segment_recall / query_num << std::endl;
+    fout << "filter recall:: " << filter_recall / query_num << std::endl;
+    fout << "index search time:: " << all_index_search_time << " brute search time:: " << all_brute_search_time
+         << " filter search time:: " << all_filter_search_time << endl;
 
     return 0;
 }

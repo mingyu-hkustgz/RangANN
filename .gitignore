@@ -7,3 +7,5 @@ __pycache__
 *.bin
 *.index
 *.txt
+*.log
+*.png

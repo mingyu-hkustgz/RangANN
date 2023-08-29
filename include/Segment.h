@@ -103,7 +103,7 @@ namespace Segment {
                 for (int i = 0; i < fan_out; i++) {
                     if (check_overlap(Q, children[i]->Left_Range, children[i]->Right_Range)) {
                         std::vector<std::pair<float, unsigned >> cur_ans;
-                        children[i]->range_search(Q, std::max(pool_size>>1,(unsigned) 1), K, cur_ans);
+                        children[i]->range_search(Q, std::max(pool_size>>1,(unsigned) K), K, cur_ans);
                         ans = merge_sort(ans, cur_ans, K);
                     }
                 }
