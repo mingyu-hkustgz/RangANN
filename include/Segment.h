@@ -59,6 +59,18 @@ namespace Segment {
             }
         }
 
+        void save_segment_index(std::ofstream &out) {
+            out.write((char *) &Left_Range, sizeof(unsigned));
+            out.write((char *) &Right_Range, sizeof(unsigned));
+            index->save_index(out);
+            if (nd_ / fan_out >= block_bound) {
+                for (int i = 0; i < fan_out; i++) {
+                    children[i]->save_segment_index(out);
+                }
+            }
+        }
+
+
         void save_segment(char *filename) {
             std::ofstream fout(filename);
             fout << Segments.size() << std::endl;

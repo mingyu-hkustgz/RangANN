@@ -155,7 +155,6 @@ namespace Index {
             in.read((char *) &ep_, sizeof(unsigned));
             in.read((char *) &nd_, sizeof(unsigned));
             level_graph_.resize(max_level_ + 1);
-//            std::cout << "Graph label " << max_level_ << " " << ep_ << " " << nd_ << "\n";
             for (unsigned i = 0; i <= max_level_; i++) {
                 level_graph_[i].resize(nd_);
             }
@@ -170,9 +169,23 @@ namespace Index {
                     }
                 }
             }
-//            std::cerr << "graph nodes " << level_graph_[0].size() << "\n";
-//            std::cerr << "begin node is " << ep_ << " first steps is " << level_graph_[max_level_][ep_].size() << "\n";
         }
+
+        void save_index(std::ofstream &out) override{
+            out.write((char *) &max_level_, sizeof(unsigned));
+            out.write((char *) &ep_, sizeof(unsigned));
+            out.write((char *) &nd_, sizeof(unsigned));
+            for (unsigned id = 0; id < nd_; id++) {
+                for (unsigned i = 0; i <= max_level_; i++) {
+                    unsigned num = level_graph_[i][id].size();
+                    out.write((char *) &num, sizeof(unsigned));
+                    if (num != 0) {
+                        out.write((char *) level_graph_[i][id].data(), num * sizeof(unsigned));
+                    }
+                }
+            }
+        }
+
 
 
     private:

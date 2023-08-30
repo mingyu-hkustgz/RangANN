@@ -10,17 +10,6 @@
 using namespace std;
 
 
-double test_recall(std::vector<std::pair<float, unsigned >> ans, int *gt, unsigned K) {
-    std::unordered_map<unsigned, bool> check_mp;
-    double base = (double) K, recall = 0.0;
-    for (int i = 0; i < K; i++) check_mp[gt[i]] = true;
-    for (auto u: ans) {
-        if (check_mp[u.second]) recall += 1.0;
-    }
-    recall /= base;
-    return recall;
-}
-
 unsigned Segment::SegmentTree::block_bound = 256;
 unsigned Segment::SegmentTree::fan_out = 8;
 unsigned Segment::SegmentTree::dimension_ = 0;
@@ -49,7 +38,7 @@ int main(int argc, char *argv[]) {
     char segment_path[256] = "";
     char dataset[256] = "";
     char logger_path[256] = "";
-    int K = 1, efSearch = 32, length_bound;
+    int K = 1, efSearch = 8, length_bound;
 
     while (iarg != -1) {
         iarg = getopt_long(argc, argv, "i:q:n:s:k:r:b:l:", longopts, &ind);
@@ -95,13 +84,14 @@ int main(int argc, char *argv[]) {
 
     if (!isFileExists_ifstream(index_path)) return 0;
     std::ifstream fin(index_path, std::ios::binary);
-    root->load_segment_index(fin, "hnsw");
+    root->load_segment_index(fin, "ivf");
     fin.close();
     srand(0);
     double segment_recall = 0.0, filter_recall = 0.0;
     double all_index_search_time = 0.0, all_brute_search_time = 0.0, all_filter_search_time = 0.0;
     unsigned brute_node_calc = 0;
     std::cerr << "test begin" << std::endl;
+    efSearch = 64;
     std::ofstream fout(logger_path, std::ios::app);
     for (int i = 0; i < query_num; i++) {
         unsigned L = rand() % length_bound;
@@ -110,25 +100,21 @@ int main(int argc, char *argv[]) {
         brute_node_calc += (R - L + 1);
         SegQuery Q(L, R, query_data + i * dim);
         ResultPool ans1, ans2, ans3;
-
         auto s = chrono::high_resolution_clock::now();
         root->range_search(Q, efSearch, K, ans1);
         auto e = chrono::high_resolution_clock::now();
         chrono::duration<double> diff = e - s;
         double time_slap1 = diff.count();
-
         s = chrono::high_resolution_clock::now();
         root->bruteforce_range_search(Q.data_, L, R, K, ans2);
         e = chrono::high_resolution_clock::now();
         diff = e - s;
         double time_slap2 = diff.count();
-
         s = chrono::high_resolution_clock::now();
-        root->index->naive_filter_search(Q, K, efSearch * 4, ans3);
+        root->index->naive_filter_search(Q, K, efSearch, ans3);
         e = chrono::high_resolution_clock::now();
         diff = e - s;
         double time_slap3 = diff.count();
-
 
         double segment = 0, filter = 0;
         unordered_map<unsigned, bool> mp;
@@ -149,7 +135,6 @@ int main(int argc, char *argv[]) {
         all_index_search_time += time_slap1;
         all_brute_search_time += time_slap2;
         all_filter_search_time += time_slap3;
-//        std::cerr<<recall<<endl;
     }
     fout << "efSearch:: " << efSearch << std::endl;
     fout << "ave length:: " << brute_node_calc / query_num << std::endl;

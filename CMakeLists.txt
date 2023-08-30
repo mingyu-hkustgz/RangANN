@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.22)
 project(RangANN)
 
 include_directories(include)
-include_directories(include/hnswlib)
-include_directories(include/ivf)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -16,8 +14,13 @@ else()
     message(FATAL_ERROR "no OpenMP supprot")
 endif()
 
-add_definitions (-std=c++11 -O3 -lboost -Wall -DINFO)
+add_definitions(-std=c++11 -O3 -lboost -Wall -DINFO)
 
-add_executable(main ./src/main.cpp)
+add_executable(test_segment_hnsw src/test_segment_hnsw.cpp)
+
+add_executable(test_segment_ivf src/test_segment_ivf.cpp)
+
+add_executable(build_ivf_index src/build_ivf_index.cpp)
+
 
 

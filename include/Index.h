@@ -13,12 +13,15 @@ namespace Index {
 
         virtual void naive_search(const float *query, unsigned int K, unsigned int nprobs, ResultPool &ans) = 0;
 
-        virtual void naive_filter_search(SegQuery Q, unsigned K, unsigned nprobs, ResultPool &ans){
-            return ;
-        }
+        virtual void naive_filter_search(SegQuery Q, unsigned K, unsigned nprobs, ResultPool &ans) = 0;
 
+        virtual void load_centroid(std::ifstream &fin) {}
+
+        virtual void build_index(bool verbose=true) {}
 
         virtual void load_index(std::ifstream &in) = 0;
+
+        virtual void save_index(std::ofstream &out) = 0;
 
         __attribute__((always_inline))
         float inner_id_dist(unsigned id, const float *query) {
