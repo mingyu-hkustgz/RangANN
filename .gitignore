@@ -6,6 +6,5 @@ __pycache__
 *.ivecs
 *.bin
 *.index
-*.txt
 *.log
 *.png

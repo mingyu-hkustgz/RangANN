@@ -5,7 +5,10 @@
 #ifndef RANGANN_INDEXHNSW_H
 #define RANGANN_INDEXHNSW_H
 #define count_dist
+#define count_segment
+
 #include "Index.h"
+#include <faiss/impl/HNSW.h>
 
 namespace Index {
     class IndexHNSW : public Index {
@@ -28,7 +31,7 @@ namespace Index {
             index_dist_calc++;
 #endif
             float curdist = inner_id_dist(currObj, query);
-            for (unsigned level = max_level_; level > 0; level--) {
+            for (int level = max_level_; level > 0; level--) {
                 bool changed = true;
                 while (changed) {
                     changed = false;
@@ -86,7 +89,7 @@ namespace Index {
 #ifdef count_dist
             filter_dist_calc++;
 #endif
-            for (unsigned level = max_level_; level > 0; level--) {
+            for (int level = max_level_; level > 0; level--) {
                 bool changed = true;
                 while (changed) {
                     changed = false;
@@ -141,7 +144,7 @@ namespace Index {
                     ++k;
             }
             unsigned ans_size = ans_queue.size();
-            if(ans_size > K)  ans_size = K;
+            if (ans_size > K) ans_size = K;
             ans.resize(K);
             for (int i = (int) ans_size - 1; i >= 0; i--) {
                 ans[i] = ans_queue.top();
@@ -171,7 +174,7 @@ namespace Index {
             }
         }
 
-        void save_index(std::ofstream &out) override{
+        void save_index(std::ofstream &out) override {
             out.write((char *) &max_level_, sizeof(unsigned));
             out.write((char *) &ep_, sizeof(unsigned));
             out.write((char *) &nd_, sizeof(unsigned));
@@ -186,6 +189,47 @@ namespace Index {
             }
         }
 
+        std::vector<unsigned> get_hnsw_neighbor(faiss::HNSW &hnsw, unsigned &id, unsigned &level) {
+            std::vector<unsigned> res;
+            size_t be, ed;
+            hnsw.neighbor_range(id, (int) level, &be, &ed);
+            for (size_t j = be; j < ed; j++) {
+                int next = hnsw.neighbors.at(j);
+                if(next!=-1){
+                    res.push_back((unsigned)next);
+                }
+            }
+            return res;
+        }
+
+
+        void build_index(bool verbose) override {
+            auto *index = new faiss::IndexHNSWFlat((int) dimension, M);
+            index->hnsw.efConstruction = efConst;
+            index->verbose = verbose;
+            index->add(nd_, data_ + Left_Range);
+            max_level_ = index->hnsw.max_level;
+            level_graph_.resize(max_level_ + 1);
+            for (unsigned i = 0; i <= max_level_; i++) {
+                level_graph_[i].resize(nd_);
+            }
+            if(verbose){
+                std::cerr<<"max level:: "<<max_level_<<" "<<"size:: "<<index->hnsw.levels.size()<<std::endl;
+            }
+            for (unsigned cur_level = 0; cur_level <= max_level_; cur_level++) {
+#pragma omp parallel for
+                for (unsigned i = 0; i < index->hnsw.levels.size(); i++) {
+                    if (cur_level >= index->hnsw.levels.at(i)) {
+                        level_graph_[cur_level][i].clear();
+                    } else {
+                        level_graph_[cur_level][i] = get_hnsw_neighbor(index->hnsw, i, cur_level);
+                    }
+                }
+                std::cerr<<"finish level cur::"<<cur_level<<std::endl;
+            }
+            ep_ = index->hnsw.entry_point;
+            delete index;
+        }
 
 
     private:
@@ -193,6 +237,7 @@ namespace Index {
         unsigned width{};
         unsigned ep_{};
         unsigned max_level_{};
+        int M = 16, efConst = 256;
     };
 }
 

@@ -3,7 +3,7 @@ project(RangANN)
 
 include_directories(include)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenMP)
 
@@ -14,13 +14,17 @@ else()
     message(FATAL_ERROR "no OpenMP supprot")
 endif()
 
-add_definitions(-std=c++11 -O3 -lboost -Wall -DINFO)
+find_package(FAISS)
 
-add_executable(test_segment_hnsw src/test_segment_hnsw.cpp)
+if (FAISS_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FAISS_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FAISS_CXX_FLAGS}")
+else()
+    message(FATAL_ERROR "no FAISS supprot")
+endif()
 
-add_executable(test_segment_ivf src/test_segment_ivf.cpp)
 
-add_executable(build_ivf_index src/build_ivf_index.cpp)
+add_definitions(-std=c++17 -Ofast -lboost -Wall -DINFO)
 
-
+add_subdirectory(src)
 

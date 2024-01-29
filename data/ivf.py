@@ -45,16 +45,16 @@ if __name__ == '__main__':
     base = fvecs_read(data_path)
     D = base.shape[1]
 
-    with open(segment_path) as f:
-        num = int(f.readline())
-        for i in range(num):
-            x, y = f.readline().split(' ')
-            L = int(x)
-            R = int(y)
-            part_base = base[L:R + 1]
-            K = int(math.sqrt(R - L + 1))
-            print(f"current num :: {i}, current segment:: {L} <-> {R}")
-            index = faiss.index_factory(D, f"IVF{K},Flat")
-            index.train(part_base)
-            centroids = index.quantizer.reconstruct_n(0, index.nlist)
-            save_invert_index(centroids, save_path, L, R)
+    # with open(segment_path) as f:
+    #     num = int(f.readline())
+    #     for i in range(num):
+    #         x, y = f.readline().split(' ')
+    #         L = int(x)
+    #         R = int(y)
+    #         part_base = base[L:R + 1]
+    #         K = int(math.sqrt(R - L + 1))
+    #         print(f"current num :: {i}, current segment:: {L} <-> {R}")
+    index = faiss.index_factory(D, f"IVF4096,Flat")
+    index.train(base)
+    centroids = index.quantizer.reconstruct_n(0, index.nlist)
+    # save_invert_index(centroids, save_path, L, R)

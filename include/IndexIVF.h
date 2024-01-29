@@ -76,9 +76,9 @@ namespace Index {
                     }
                 }
             }
-            int queue_size = (int)ans_queue.size();
+            int queue_size = (int) ans_queue.size();
             ans.resize(K);
-            for (int i = queue_size-1; i >= 0; i--) {
+            for (int i = queue_size - 1; i >= 0; i--) {
                 ans[i] = ans_queue.top();
                 ans_queue.pop();
             }
@@ -86,10 +86,26 @@ namespace Index {
             std::priority_queue<std::pair<float, unsigned> >().swap(ans_queue);
         }
 
+        void generate_segment_centroid(bool verbose) {
+            centroid_nd_ = (unsigned) sqrt(nd_) * 4;
+            std::string index_key = "IVF"+std::to_string(centroid_nd_)+",Flat";
+            faiss::Index *index;
+            index = faiss::index_factory((int) dimension, index_key.c_str());
+            faiss::IndexIVFFlat *IVF;
+            if(verbose)
+                std::cerr<<"index key:: "<<index_key<<std::endl;
+            IVF = dynamic_cast<faiss::IndexIVFFlat*>(index);
+            IVF->verbose = verbose;
+            IVF->train(nd_, data_ + Left_Range);
+            centroid_ = new float [centroid_nd_ * dimension] ;
+            IVF->quantizer->reconstruct_n(0,centroid_nd_,centroid_);
+            delete IVF;
+        }
 
-        void build_index(bool verbose = true) {
+        void build_index(bool verbose) override {
             std::cerr << "start generate invert file" << std::endl;
             std::vector<std::vector<unsigned> > reorder_map;
+            generate_segment_centroid(verbose);
             reorder_map.resize(centroid_nd_);
             unsigned logger_sum = 0;
 #pragma omp parallel for
@@ -97,10 +113,10 @@ namespace Index {
 #pragma omp critical
                 if (verbose && ++logger_sum % (nd_ / 20) == 0)
                     std::cerr << "current count :: " << logger_sum << std::endl;
-                float dist = naive_l2_dist_calc(data_ + i * dimension, centroid_, dimension);
+                float dist = inner_id_dist(i, centroid_);
                 unsigned belong = 0;
                 for (unsigned j = 1; j < centroid_nd_; j++) {
-                    float new_dist = naive_l2_dist_calc(data_ + i * dimension, centroid_ + j * dimension, dimension);
+                    float new_dist = inner_id_dist(i, centroid_ + j * dimension);
                     if (dist > new_dist) {
                         belong = j;
                         dist = new_dist;

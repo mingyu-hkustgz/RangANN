@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     char segment_path[256] = "";
     char dataset[256] = "";
     char logger_path[256] = "";
-    int K = 1, efSearch = 8, length_bound;
+    int K = 1, efSearch = 128, length_bound;
 
     while (iarg != -1) {
         iarg = getopt_long(argc, argv, "i:q:n:s:k:r:b:l:", longopts, &ind);
@@ -91,7 +91,6 @@ int main(int argc, char *argv[]) {
     double all_index_search_time = 0.0, all_brute_search_time = 0.0, all_filter_search_time = 0.0;
     unsigned brute_node_calc = 0;
     std::cerr << "test begin" << std::endl;
-    efSearch = 64;
     std::ofstream fout(logger_path, std::ios::app);
     for (int i = 0; i < query_num; i++) {
         unsigned L = rand() % length_bound;
@@ -119,14 +118,14 @@ int main(int argc, char *argv[]) {
         double segment = 0, filter = 0;
         unordered_map<unsigned, bool> mp;
         mp.clear();
-        for (auto u: ans2) mp[u.second] = true;
+        float dist_bound = 0;
+        for (auto u: ans2) mp[u.second] = true, dist_bound = std::max(dist_bound, u.first);
         for (auto v: ans1) {
-            if (mp[v.second]) segment += 1.0;
+            if (v.first <= dist_bound) segment += 1.0;
         }
         for (auto v: ans3) {
-            if (mp[v.second]) filter += 1.0;
+            if (v.first <= dist_bound) filter += 1.0;
         }
-
 
         segment /= K;
         filter /= K;

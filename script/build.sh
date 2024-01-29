@@ -1,6 +1,7 @@
-for index_type in {hnsw,ivf}; do
-  for data in {sift,gist,deep1M}; do
+cd ..
 
+for index_type in hnsw; do
+  for data in {sift,gist,deep1M}; do
     DATA=/home/DATA/vector_data
     data_path="${DATA}/${data}/${data}_base.fvecs"
     query_path="${DATA}/${data}/${data}_query.fvecs"

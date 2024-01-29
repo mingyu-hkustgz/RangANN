@@ -6,7 +6,11 @@
 #define RANGANN_INDEX_H
 
 #include "utils.h"
-
+#include <faiss/IndexHNSW.h>
+#include <faiss/AutoTune.h>
+#include <faiss/AutoTune.h>
+#include <faiss/index_factory.h>
+#include <faiss/IndexIVFFlat.h>
 namespace Index {
     class Index {
     public:
@@ -17,14 +21,14 @@ namespace Index {
 
         virtual void load_centroid(std::ifstream &fin) {}
 
-        virtual void build_index(bool verbose=true) {}
+        virtual void build_index(bool verbose) = 0;
 
         virtual void load_index(std::ifstream &in) = 0;
 
         virtual void save_index(std::ofstream &out) = 0;
 
         __attribute__((always_inline))
-        float inner_id_dist(unsigned id, const float *query) {
+        float inner_id_dist(unsigned id, const float *query) const {
             unsigned outer_id = id + Left_Range;
             return naive_l2_dist_calc(data_ + outer_id * dimension, query, dimension);
         }

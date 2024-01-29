@@ -27,6 +27,8 @@
 #include <cmath>
 #include <queue>
 #include <Eigen/Dense>
+#include <faiss/IndexFlat.h>
+#include <faiss/IndexHNSW.h>
 
 #ifndef WIN32
 

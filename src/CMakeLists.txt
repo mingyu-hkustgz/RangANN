@@ -1,0 +1,17 @@
+add_executable(test_segment_hnsw test_segment_hnsw.cpp)
+target_link_libraries(test_segment_hnsw PRIVATE faiss)
+
+add_executable(test_segment_ivf test_segment_ivf.cpp)
+target_link_libraries(test_segment_ivf PRIVATE faiss)
+
+add_executable(test_faiss_hnsw test_faiss_hnsw.cpp)
+target_link_libraries(test_faiss_hnsw PRIVATE faiss)
+
+add_executable(test_faiss_ivf test_faiss_ivf.cpp)
+target_link_libraries(test_faiss_ivf PRIVATE faiss)
+
+add_executable(build_segment_hnsw build_segment_hnsw.cpp)
+target_link_libraries(build_segment_hnsw PRIVATE faiss)
+
+add_executable(build_segment_ivf build_segment_ivf.cpp)
+target_link_libraries(build_segment_ivf PRIVATE faiss)
