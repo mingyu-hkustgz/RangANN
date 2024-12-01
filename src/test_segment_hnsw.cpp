@@ -5,18 +5,9 @@
 #include "utils.h"
 #include "Segment.h"
 #include <getopt.h>
-#include <faiss/IndexHNSW.h>
 #define count_dist
 using namespace std;
 
-
-unsigned Segment::SegmentTree::block_bound = 1024;
-unsigned Segment::SegmentTree::fan_out = 4;
-unsigned Segment::SegmentTree::dimension_ = 0;
-float *Segment::SegmentTree::data_ = nullptr;
-std::vector<std::pair<unsigned, unsigned> > Segment::SegmentTree::Segments;
-float *Index::Index::data_ = nullptr;
-unsigned Index::Index::dimension = 0;
 
 
 int main(int argc, char *argv[]) {
@@ -73,11 +64,6 @@ int main(int argc, char *argv[]) {
     unsigned query_num, query_dim;
     float *query_data;
     load_float_data(query_path, query_data, query_num, query_dim);
-    Segment::SegmentTree::dimension_ = dim;
-    Segment::SegmentTree::data_ = data;
-    Index::Index::dimension = dim;
-    Index::Index::data_ = data;
-    auto index = new Segment::SegmentTree(0, points_num);
 
     auto root = index->build_segment_tree(0, points_num - 1);
     root->save_segment(segment_path);

@@ -2,10 +2,7 @@
 // Created by mingyu on 23-8-21.
 //
 #include "utils.h"
-#include "Index.h"
-#include "IndexHNSW.h"
-#include "IndexIVF.h"
-
+#include "Index1D.h"
 #ifndef RANGANN_SEGMENT_H
 #define RANGANN_SEGMENT_H
 
@@ -49,8 +46,8 @@ namespace Segment {
         }
 
         void build_segment_index(const std::string &index_type) {
-            if (index_type == "hnsw") index = new Index::IndexHNSW(Left_Range, Right_Range);
-            else if (index_type == "ivf") index = new Index::IndexIVF(Left_Range, Right_Range);
+//            if (index_type == "hnsw") index = new Index::IndexHNSW(Left_Range, Right_Range);
+//            else if (index_type == "ivf") index = new Index::IndexIVF(Left_Range, Right_Range);
             if (this != root)
                 index->build_index(verbose);
             if (nd_ / Segment::SegmentTree::fan_out >= Segment::SegmentTree::block_bound) {
@@ -65,8 +62,8 @@ namespace Segment {
             unsigned L, R;
             in.read((char *) &L, sizeof(unsigned));
             in.read((char *) &R, sizeof(unsigned));
-            if (index_type == "hnsw") index = new Index::IndexHNSW(L, R);
-            else if (index_type == "ivf") index = new Index::IndexIVF(L, R);
+//            if (index_type == "hnsw") index = new Index::IndexHNSW(L, R);
+//            else if (index_type == "ivf") index = new Index::IndexIVF(L, R);
             if (this != root)
                 index->load_index(in);
             if (nd_ / fan_out >= block_bound) {

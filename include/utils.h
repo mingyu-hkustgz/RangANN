@@ -27,15 +27,13 @@
 #include <cmath>
 #include <queue>
 #include <Eigen/Dense>
-#include <faiss/IndexFlat.h>
-#include <faiss/IndexHNSW.h>
-
+#include "hnswlib/hnswlib.h"
 #ifndef WIN32
 
 #include<sys/resource.h>
 
 #endif
-
+#define RANG_BOUND 1024
 
 #ifndef RANGANN_UTILS_H
 
@@ -66,7 +64,23 @@ struct SegQuery {
     float *data_;
 };
 
-typedef std::vector<std::pair<float, unsigned>> ResultPool;
+class RangeFilter : public hnswlib::BaseFilterFunctor {
+public:
+    hnswlib::labeltype L, R;
+
+    RangeFilter(hnswlib::labeltype left, hnswlib::labeltype right) {
+        L = left;
+        R = right;
+    }
+
+    bool operator()(hnswlib::labeltype id) override {
+        if (L <= id && id <= R) return true;
+        else return false;
+    }
+};
+
+
+typedef std::priority_queue<std::pair<float, hnswlib::labeltype>> ResultQueue;
 
 #define RANGANN_UTILS_H
 
@@ -186,6 +200,63 @@ merge_sort(std::vector<std::pair<float, unsigned> > &left, std::vector<std::pair
         cur++;
     }
     return ans;
+}
+
+inline float sqr_dist(float *d, float *q, uint32_t L) {
+    float PORTABLE_ALIGN32 TmpRes[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t num_blk16 = L >> 4;
+    uint32_t l = L & 0b1111;
+
+    __m256 diff, v1, v2;
+    __m256 sum = _mm256_set1_ps(0);
+    for (int i = 0; i < num_blk16; i++) {
+        v1 = _mm256_loadu_ps(d);
+        v2 = _mm256_loadu_ps(q);
+        d += 8;
+        q += 8;
+        diff = _mm256_sub_ps(v1, v2);
+        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
+
+        v1 = _mm256_loadu_ps(d);
+        v2 = _mm256_loadu_ps(q);
+        d += 8;
+        q += 8;
+        diff = _mm256_sub_ps(v1, v2);
+        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
+    }
+    for (int i = 0; i < l / 8; i++) {
+        v1 = _mm256_loadu_ps(d);
+        v2 = _mm256_loadu_ps(q);
+        d += 8;
+        q += 8;
+        diff = _mm256_sub_ps(v1, v2);
+        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
+    }
+    _mm256_store_ps(TmpRes, sum);
+
+    float ret = TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3] + TmpRes[4] + TmpRes[5] + TmpRes[6] + TmpRes[7];
+
+    for (int i = 0; i < l % 8; i++) {
+        float tmp = (*q) - (*d);
+        ret += tmp * tmp;
+        d++;
+        q++;
+    }
+    return ret;
+}
+
+ResultQueue bruteforce_range_search(SegQuery Q,float *base,unsigned D, unsigned K) {
+    ResultQueue res;
+    for (unsigned i = Q.L; i <= Q.R; i++) {
+        float dist = sqr_dist(Q.data_, base + i * D, D);
+        if (res.size() < K)
+            res.emplace(dist, i);
+        else if (dist < res.top().first) {
+            res.pop();
+            res.emplace(dist, i);
+        }
+    }
+    return res;
 }
 
 #endif //RANGANN_UTILS_H
