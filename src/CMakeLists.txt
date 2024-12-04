@@ -1,8 +1,12 @@
 add_executable(test_build_hnsw test_build_hnsw.cpp)
 
+add_executable(test_build_static_hnsw test_build_static_hnsw.cpp)
+
 add_executable(test_build_half_hnsw test_build_half_hnsw.cpp)
 
 add_executable(test_build_hnsw1D test_build_hnsw1D.cpp)
+
+add_executable(test_build_hnsw2D test_build_hnsw2D.cpp)
 
 add_executable(test_search_hnsw test_search_hnsw.cpp)
 

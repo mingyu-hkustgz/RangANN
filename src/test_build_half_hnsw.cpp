@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     unsigned N = X->n, D = X->d;
     N>>=1;
     hnswlib::L2Space l2space(D);
-    auto appr_alg = new hnswlib::HierarchicalNSW<float>(&l2space, N, M, efConstruction);
+    auto appr_alg = new hnswlib::HierarchicalNSW<float>(&l2space, N, HNSW_M, HNSW_efConstruction);
     appr_alg->addPoint(X->data, 0);
     unsigned check_tag = 1, report = 50000;
 #pragma omp parallel for schedule(dynamic, 144)

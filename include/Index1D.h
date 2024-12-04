@@ -10,8 +10,8 @@
 #include "hnswlib/hnswalg.h"
 #include "hnswlib/hnswlib.h"
 
-#define M 16
-#define efConstruction 500
+#define HNSW_M 16
+#define HNSW_efConstruction 500
 
 
 class Index1D {
@@ -26,6 +26,7 @@ public:
         N = num;
         D = dim;
     }
+
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
     naive_search(const float *query, unsigned K, unsigned nprobs) {
         auto appr_alg = appr_alg_list.back();
@@ -63,7 +64,7 @@ public:
             Up >>= 1;
         }
         std::sort(index_range_list.begin(), index_range_list.end());
-        auto appr_alg = new hnswlib::HierarchicalNSW<float>(&l2space, N, M, efConstruction);
+        auto appr_alg = new hnswlib::HierarchicalNSW<float>(&l2space, N, HNSW_M, HNSW_efConstruction);
         appr_alg->addPoint(X->data, 0);
         Now = 1;
         std::ofstream fout(output, std::ios::binary);
@@ -106,7 +107,7 @@ public:
             Now = range.second;
 
             auto l2space = new hnswlib::L2Space(D);
-            auto appr_alg = new hnswlib::HierarchicalNSW<float>(l2space, Now, M, efConstruction);
+            auto appr_alg = new hnswlib::HierarchicalNSW<float>(l2space, Now, HNSW_M, HNSW_efConstruction);
             fin.read((char *) &appr_alg->enterpoint_node_, sizeof(unsigned int));
             fin.read((char *) &appr_alg->maxlevel_, sizeof(unsigned int));
             appr_alg->cur_element_count = Now;

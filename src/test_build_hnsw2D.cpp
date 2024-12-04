@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <getopt.h>
 #include "utils.h"
-#include "Index1D.h"
+#include "Index2D.h"
 using namespace std;
 
 
@@ -49,9 +49,9 @@ int main(int argc, char *argv[]) {
         }
     }
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(index_path, "%s%s_1D.hnsw", index_path, dataset);
-    Index1D hnsw1D;
-    hnsw1D.build_1D_index_and_save(data_path, index_path);
+    sprintf(index_path, "%s%s_2D.hnsw", index_path, dataset);
+    Index2D hnsw2D;
+    hnsw2D.build_2D_index_and_save(data_path, index_path);
     return 0;
 }
 

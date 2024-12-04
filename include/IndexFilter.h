@@ -16,8 +16,8 @@
 #include "hnswlib/hnswalg.h"
 #include "hnswlib/hnswlib.h"
 
-#define M 16
-#define efConstruction 500
+#define HNSW_M 16
+#define HNSW_efConstruction 500
 
 class IndexFilter {
 public:
@@ -56,7 +56,7 @@ public:
 
         hnswlib::L2Space l2space(D);
 
-        appr_alg = new hnswlib::HierarchicalNSW<float>(&l2space, N, M, efConstruction);
+        appr_alg = new hnswlib::HierarchicalNSW<float>(&l2space, N, HNSW_M, HNSW_efConstruction);
         appr_alg->addPoint(X->data, 0);
         unsigned check_tag = 1;
 #pragma omp parallel for schedule(dynamic, 144)
