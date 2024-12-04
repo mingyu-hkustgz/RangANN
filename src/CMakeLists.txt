@@ -11,7 +11,3 @@ add_executable(test_build_hnsw2D test_build_hnsw2D.cpp)
 add_executable(test_search_hnsw test_search_hnsw.cpp)
 
 add_executable(test_search_hnsw1D test_search_hnsw1D.cpp)
-
-#add_executable(build_segment_ivf build_segment_ivf.cpp)
-
-#target_link_libraries(build_segment_ivf PRIVATE faiss)
