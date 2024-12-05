@@ -200,7 +200,7 @@ namespace hnswlib {
 
 
         inline char *getDataByInternalId(tableint internal_id) const {
-            return (static_base_data_ + internal_id * data_size_);
+            return (static_base_data_ + (internal_id + label_begin_) * data_size_);
         }
 
 

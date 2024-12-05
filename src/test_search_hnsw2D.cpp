@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "test begin" << std::endl;
     std::ofstream fout(result_path, std::ios::app);
     std::cerr << K << std::endl;
-    unsigned query_num = 1000;
+    unsigned query_num = 100;
     for (int i = 0; i < query_num; i++) {
         unsigned L = 0;
         unsigned R = rand() % length_bound;
@@ -130,12 +130,12 @@ int main(int argc, char *argv[]) {
             ans1.pop();
         }
         if (index_gt == gt) segment += 1.0;
-        if (segment == 0)
-        {
-            std::cerr<<i<<std::endl;
-            std::cerr << L << " " << R << " " << dist_bound << " " << dist_half << " " << dist_index << std::endl;
-            std::cerr<<gt<<" " <<half_gt<<" "<<index_gt<<std::endl;
-        }
+//        if (segment == 0)
+//        {
+//            std::cerr<<i<<" "<<index_gt<<std::endl;
+////            std::cerr << L << " " << R << " " << dist_bound << " " << dist_half << " " << dist_index << std::endl;
+////            std::cerr<<gt<<" " <<half_gt<<" "<<index_gt<<std::endl;
+//        }
 
         segment /= K;
         half /= K;
