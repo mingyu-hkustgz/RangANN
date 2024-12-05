@@ -152,7 +152,7 @@ public:
     }
 
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
-    bruteforce_range_search(float *query, float *base, unsigned L, unsigned R, unsigned K) {
+    bruteforce_search(float *&query, float *base, unsigned L, unsigned R, unsigned K) {
         std::priority_queue<std::pair<float, hnswlib::labeltype> > Q;
         for (size_t i = L; i <= R; i++) {
             float dist = sqr_dist(query, base + i * D, D);
@@ -170,38 +170,27 @@ public:
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
     half_blood_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *&cur) {
         if (cur->L <= Q.L && Q.R <= cur->R && (Q.R - Q.L + 1) * 2 > (cur->R - cur->L + 1)) {
-            RangeFilter range(Q.L, Q.R);
+            RangeFilter range(Q.L-cur->L, Q.R-cur->L);
             cur->appr_alg->setEf(nprobs);
             return cur->appr_alg->searchKnn(Q.data_, K, &range);
         }
         if (cur->left == nullptr && cur->right == nullptr) {
-            return bruteforce_range_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), Q.L,
-                                           Q.R, K);
+            return bruteforce_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), Q.L,
+                                     Q.R, K);
         }
         hnswlib::labeltype mid = (cur->L + cur->R) >> 1;
         std::priority_queue<std::pair<float, hnswlib::labeltype> > res_left, res_right;
-        auto QL = Q;
-        auto QR = Q;
-        QL.R = mid;
-        QR.L = mid + 1;
+        SegQuery QL = Q, QR = Q;
+        QL.R = std::min(QL.R, mid);
+        QR.L = std::max(QR.L, mid+1);
         if (cur->left != nullptr) {
-            if (check_overlap(QL, cur->L, mid)) {
-                res_left = segment_tree_search(QL, K, nprobs, cur->left);
-            }
-        } else {
-            if (check_overlap(QL, cur->L, mid)) {
-                res_left = bruteforce_range_search(QL.data_, (float *) (cur->appr_alg->static_base_data_),
-                                                   QL.L, QL.R, K);
+            if (Q.L <= mid) {
+                res_left = half_blood_search(QL, K, nprobs, cur->left);
             }
         }
         if (cur->right != nullptr) {
-            if (check_overlap(QR, mid + 1, cur->R)) {
-                res_right = segment_tree_search(QR, K, nprobs, cur->right);
-            }
-        } else {
-            if (check_overlap(QR, mid + 1, cur->R)) {
-                res_right = bruteforce_range_search(QR.data_, (float *) (cur->appr_alg->static_base_data_),
-                                                    QR.L, QR.R, K);
+            if (Q.R > mid) {
+                res_right = half_blood_search(QR, K, nprobs, cur->right);
             }
         }
         return merge_res(res_left, res_right);
@@ -211,37 +200,25 @@ public:
     segment_tree_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *&cur) {
         if (Q.L <= cur->L && cur->R <= Q.R) {
             if (cur->appr_alg == nullptr)
-                return bruteforce_range_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), cur->L, cur->R,
+                return bruteforce_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), cur->L, cur->R,
                                                K);
             cur->appr_alg->setEf(nprobs);
             return cur->appr_alg->searchKnn(Q.data_, K);
         }
         if (cur->left == nullptr && cur->right == nullptr) {
-            return bruteforce_range_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), std::max(Q.L, cur->L),
+            return bruteforce_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), std::max(Q.L, cur->L),
                                            std::min(Q.R, cur->R), K);
         }
         hnswlib::labeltype mid = (cur->L + cur->R) >> 1;
         std::priority_queue<std::pair<float, hnswlib::labeltype> > res_left, res_right;
         if (cur->left != nullptr) {
-            if (check_overlap(Q, cur->L, mid)) {
+            if (Q.L <= mid) {
                 res_left = segment_tree_search(Q, K, nprobs, cur->left);
-            }
-        } else {
-            if (check_overlap(Q, cur->L, mid)) {
-                res_left = bruteforce_range_search(Q.data_, (float *) (cur->appr_alg->static_base_data_),
-                                                   std::max(Q.L, cur->left->L),
-                                                   std::min(Q.R, cur->left->R), K);
             }
         }
         if (cur->right != nullptr) {
-            if (check_overlap(Q, mid + 1, cur->R)) {
+            if (Q.R > mid) {
                 res_right = segment_tree_search(Q, K, nprobs, cur->right);
-            }
-        } else {
-            if (check_overlap(Q, mid + 1, cur->R)) {
-                res_right = bruteforce_range_search(Q.data_, (float *) (cur->appr_alg->static_base_data_),
-                                                    std::max(Q.L, cur->right->L),
-                                                    std::min(Q.R, cur->right->R), K);
             }
         }
         return merge_res(res_left, res_right);

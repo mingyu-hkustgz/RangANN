@@ -93,16 +93,9 @@ bool isFileExists_ifstream(const char *name) {
 }
 
 
-bool check_overlap(SegQuery Q, hnswlib::labeltype L, hnswlib::labeltype R) {
-    if (L <= Q.L && Q.L <= R) return true;
-    if (L <= Q.R && Q.R <= R) return true;
-    if (Q.L <= L && R <= Q.R) return true;
-    return false;
-}
-
 inline std::priority_queue<std::pair<float, hnswlib::labeltype> >
-merge_res(std::priority_queue<std::pair<float, hnswlib::labeltype> > &res1,
-          std::priority_queue<std::pair<float, hnswlib::labeltype> > &res2) {
+merge_res(std::priority_queue<std::pair<float, hnswlib::labeltype> > res1,
+          std::priority_queue<std::pair<float, hnswlib::labeltype> > res2) {
     while(!res2.empty()){
         res1.emplace(res2.top());
         res2.pop();

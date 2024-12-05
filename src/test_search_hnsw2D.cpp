@@ -74,7 +74,8 @@ int main(int argc, char *argv[]) {
     std::cerr << "test begin" << std::endl;
     std::ofstream fout(result_path, std::ios::app);
     std::cerr << K << std::endl;
-    for (int i = 0; i < Q.n / 100; i++) {
+    unsigned query_num = 1000;
+    for (int i = 0; i < query_num; i++) {
         unsigned L = 0;
         unsigned R = rand() % length_bound;
         if (R >= X.n) R = X.n - 1;
@@ -131,6 +132,7 @@ int main(int argc, char *argv[]) {
         if (index_gt == gt) segment += 1.0;
         if (segment == 0)
         {
+            std::cerr<<i<<std::endl;
             std::cerr << L << " " << R << " " << dist_bound << " " << dist_half << " " << dist_index << std::endl;
             std::cerr<<gt<<" " <<half_gt<<" "<<index_gt<<std::endl;
         }
@@ -144,9 +146,9 @@ int main(int argc, char *argv[]) {
         all_brute_search_time += time_slap3;
     }
     fout << "efSearch:: " << efSearch << std::endl;
-    fout << "ave length:: " << brute_node_calc * 100 / Q.n << std::endl;
+    fout << "ave length:: " << brute_node_calc /query_num << std::endl;
     fout << index_dist_calc << " " << brute_node_calc << " " << filter_dist_calc << std::endl;
-    fout << "segment recall:: " << segment_recall * 100 / Q.n << " half recall:: " << half_blood_recall * 100 / Q.n
+    fout << "segment recall:: " << segment_recall /query_num << " half recall:: " << half_blood_recall /query_num
          << std::endl;
     fout << "index search time:: " << all_index_search_time << "  half search time:: " << all_half_search_time
          << "  brute search time:: " << all_brute_search_time
