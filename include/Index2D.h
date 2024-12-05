@@ -9,8 +9,8 @@
 #include "hnswlib/hnswalg-static.h"
 #include "matrix.h"
 
-#define HNSW_M 16
-#define HNSW_efConstruction 500
+#define HNSW2D_M 16
+#define HNSW2D_efConstruction 200
 template<typename dist_t> char *hnswlib::HierarchicalNSWStatic<dist_t>::static_base_data_ = NULL;
 
 class SegmentTree {
@@ -48,7 +48,7 @@ public:
         incremental_build(0, N - 1, fout);
     }
 
-    void save_single_static_index(hnswlib::HierarchicalNSWStatic<float> *appr_alg, std::ofstream &fout) {
+    void save_single_static_index(hnswlib::HierarchicalNSWStatic<float> *&appr_alg, std::ofstream &fout) {
         fout.write((char *) &appr_alg->enterpoint_node_, sizeof(unsigned int));
         fout.write((char *) &appr_alg->maxlevel_, sizeof(unsigned int));
         for (size_t j = 0; j < appr_alg->cur_element_count; j++) {
@@ -62,10 +62,10 @@ public:
                    appr_alg->cur_element_count * appr_alg->size_data_per_element_);
     }
 
-    void load_single_static_index(hnswlib::HierarchicalNSWStatic<float> *appr_alg, std::ifstream &fin,
+    void load_single_static_index(hnswlib::HierarchicalNSWStatic<float> *&appr_alg, std::ifstream &fin,
                                   hnswlib::tableint L, hnswlib::tableint R) {
         auto l2space = new hnswlib::L2Space(D);
-        appr_alg = new hnswlib::HierarchicalNSWStatic<float>(l2space, (R - L + 1), HNSW_M, HNSW_efConstruction);
+        appr_alg = new hnswlib::HierarchicalNSWStatic<float>(l2space, (R - L + 1), HNSW2D_M, HNSW2D_efConstruction);
         fin.read((char *) &appr_alg->enterpoint_node_, sizeof(unsigned int));
         fin.read((char *) &appr_alg->maxlevel_, sizeof(unsigned int));
         appr_alg->cur_element_count = (R - L + 1);
@@ -79,8 +79,9 @@ public:
             } else {
                 appr_alg->element_levels_[j] = linkListSize / appr_alg->size_links_per_element_;
                 appr_alg->linkLists_[j] = (char *) malloc(linkListSize);
-                if (appr_alg->linkLists_[j] == nullptr)
+                if (appr_alg->linkLists_[j] == nullptr) {
                     throw std::runtime_error("Not enough memory: loadIndex failed to allocate linklist");
+                }
                 fin.read(appr_alg->linkLists_[j], linkListSize);
             }
 
@@ -94,29 +95,35 @@ public:
     incremental_build(hnswlib::labeltype L, hnswlib::labeltype R, std::ofstream &fout) {
         if ((R - L + 1) < RANG_BOUND) return nullptr;
         hnswlib::labeltype mid = (L + R) >> 1;
+        hnswlib::labeltype left_size = (mid - L + 1), right_size = (R - mid), mid_size = (R - L + 1);
         auto left_index = incremental_build(L, mid, fout);
-        if (left_index == NULL) {
+
+        //can not use incremental construct approach
+        if (left_index == nullptr) {
+            delete left_index;
             auto l2space = new hnswlib::L2Space(D);
-            left_index = new hnswlib::HierarchicalNSWStatic<float>(l2space, (R - L + 1), HNSW_M, HNSW_efConstruction);
-            std::cerr << "BEGIN RANGE BOTTOM:: " << L << " " << R << std::endl;
+            auto mid_index = new hnswlib::HierarchicalNSWStatic<float>(l2space, mid_size, HNSW2D_M,
+                                                                       HNSW2D_efConstruction);
 #pragma omp parallel for
             for (hnswlib::labeltype i = L; i <= R; i++) {
-                left_index->addPoint(
-                        hnswlib::HierarchicalNSWStatic<float>::static_base_data_ + i * left_index->data_size_, i - L);
+                mid_index->addPoint(
+                        hnswlib::HierarchicalNSWStatic<float>::static_base_data_ + i * mid_index->data_size_, i - L);
             }
-            save_single_static_index(left_index, fout);
-            return left_index;
+            save_single_static_index(mid_index, fout);
+            return mid_index;
         }
+
+        //we remove first layer
         if (L == 0 && R == N - 1) {
             delete left_index;
         } else {
-            left_index->resizeIndex(R - L + 1);
-            std::cerr << "BEGIN RANGE ICE:: " << L << " " << R << std::endl;
+            //Incremental construct based on previous Index
+            left_index->resizeIndex(mid_size);
 #pragma omp parallel for
             for (hnswlib::labeltype i = mid + 1; i <= R; i++) {
                 left_index->addPoint(
                         hnswlib::HierarchicalNSWStatic<float>::static_base_data_ + i * left_index->data_size_,
-                        i - (mid + 1));
+                        i - L);
             }
             save_single_static_index(left_index, fout);
         }
@@ -132,7 +139,8 @@ public:
         auto cur_node = new SegmentTree(L, R);
         hnswlib::labeltype mid = (L + R) >> 1;
         cur_node->left = build_segment_tree(L, mid, fin);
-        load_single_static_index(cur_node->appr_alg, fin, L, R);
+        if ((R - L + 1) != N)
+            load_single_static_index(cur_node->appr_alg, fin, L, R);
         cur_node->right = build_segment_tree(mid + 1, R, fin);
         return cur_node;
     }
@@ -140,7 +148,7 @@ public:
 
     void load_index(char *input) {
         std::ifstream fin(input, std::ios::binary);
-        root = build_segment_tree(1, N - 1, fin);
+        root = build_segment_tree(0, N - 1, fin);
     }
 
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
@@ -159,9 +167,11 @@ public:
     }
 
 
-    std::priority_queue<std::pair<float, hnswlib::labeltype> > half_blood_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *cur) {
+    std::priority_queue<std::pair<float, hnswlib::labeltype> >
+    half_blood_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *&cur) {
         if (cur->L <= Q.L && Q.R <= cur->R && (Q.R - Q.L + 1) * 2 > (cur->R - cur->L + 1)) {
             RangeFilter range(Q.L, Q.R);
+            cur->appr_alg->setEf(nprobs);
             return cur->appr_alg->searchKnn(Q.data_, K, &range);
         }
         if (cur->left == nullptr && cur->right == nullptr) {
@@ -173,7 +183,7 @@ public:
         auto QL = Q;
         auto QR = Q;
         QL.R = mid;
-        QR.L = mid+1;
+        QR.L = mid + 1;
         if (cur->left != nullptr) {
             if (check_overlap(QL, cur->L, mid)) {
                 res_left = segment_tree_search(QL, K, nprobs, cur->left);
@@ -198,8 +208,12 @@ public:
     }
 
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
-    segment_tree_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *cur) {
+    segment_tree_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *&cur) {
         if (Q.L <= cur->L && cur->R <= Q.R) {
+            if (cur->appr_alg == nullptr)
+                return bruteforce_range_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), cur->L, cur->R,
+                                               K);
+            cur->appr_alg->setEf(nprobs);
             return cur->appr_alg->searchKnn(Q.data_, K);
         }
         if (cur->left == nullptr && cur->right == nullptr) {

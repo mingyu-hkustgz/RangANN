@@ -145,22 +145,13 @@ int main(int argc, char *argv[]) {
     Matrix<unsigned> G(groundtruth_path);
     unsigned N = X->n, D = X->d;
     hnswlib::L2Space l2space(D);
-    auto appr_alg = new hnswlib::HierarchicalNSWStatic<float>(&l2space, N, 16, 500);
+    auto appr_alg = new hnswlib::HierarchicalNSWStatic<float>(&l2space, index_path, false);
     appr_alg->static_base_data_ = (char*) X->data;
-    appr_alg->addPoint(X->data, 0);
-    unsigned check_tag = 1, report = 50000;
-#pragma omp parallel for schedule(dynamic, 144)
-    for (int i = 1; i < N; i++) {
-        appr_alg->addPoint(X->data + i * D, i);
-#pragma omp critical
-        {
-            check_tag++;
-            if (check_tag % report == 0) {
-                std::cerr << "Processing - " << check_tag << " / " << N << std::endl;
-            }
-        }
-    }
-    appr_alg->saveIndex(index_path);
+    size_t k = G.d;
+    vector<std::priority_queue<std::pair<float, hnswlib::labeltype >>> answers;
+    get_gt(G.data, Q.data, appr_alg->max_elements_, Q.n, l2space, Q.d, answers, k, 1, *appr_alg);
+    test_vs_recall(Q.data, appr_alg->max_elements_, Q.n, *appr_alg, Q.d, answers, 1);
+
     return 0;
 }
 
