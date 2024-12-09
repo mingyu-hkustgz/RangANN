@@ -104,6 +104,7 @@ public:
             auto l2space = new hnswlib::L2Space(D);
             auto mid_index = new hnswlib::HierarchicalNSWStatic<float>(l2space, mid_size, HNSW2D_M,
                                                                        HNSW2D_efConstruction);
+            mid_index->label_begin_ = L;
 #pragma omp parallel for
             for (hnswlib::labeltype i = L; i <= R; i++) {
                 mid_index->addPoint(
@@ -193,19 +194,26 @@ public:
                 res_right = half_blood_search(QR, K, nprobs, cur->right);
             }
         }
-        return merge_res(res_left, res_right);
+        return merge_res(res_left, res_right, K);
     }
 
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
     segment_tree_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *&cur) {
+        //std::cerr<<"TOP::  "<<cur->L<<" "<<cur->R<<" "<<Q.L<<" "<<Q.R<<std::endl;
         if (Q.L <= cur->L && cur->R <= Q.R) {
-            if (cur->appr_alg == nullptr)
+            //std::cerr<<"Inner Check:: "<<cur->L<<" "<<cur->R<<std::endl;
+            if (cur->appr_alg == nullptr){
+                std::cerr<<"BRUTE Search:: "<<cur->L<<" "<<cur->R<<std::endl;
                 return bruteforce_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), cur->L, cur->R,
-                                               K);
+                                         K);
+            }
+            //std::cerr<<"STILLL HNSW"<<std::endl;
             cur->appr_alg->setEf(nprobs);
+            //std::cerr<<"HNSW Search:: "<<cur->L<<" "<<cur->R<<std::endl;
             return cur->appr_alg->searchKnn(Q.data_, K);
         }
         if (cur->left == nullptr && cur->right == nullptr) {
+//            std::cerr<<"BRUTE Search:: "<<cur->L<<" "<<cur->R<<std::endl;
             return bruteforce_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), std::max(Q.L, cur->L),
                                            std::min(Q.R, cur->R), K);
         }
@@ -221,7 +229,10 @@ public:
                 res_right = segment_tree_search(Q, K, nprobs, cur->right);
             }
         }
-        return merge_res(res_left, res_right);
+//        if(!res_left.empty()) std::cerr<<"L :: "<<res_left.top().first<<" "<<res_left.top().second<<std::endl;
+//        if(!res_right.empty()) std::cerr<<"R :: "<<res_right.top().first<<" "<<res_right.top().second<<std::endl;
+//        std::cerr<<"~~~~~~~~~~~~:: "<<cur->L<<" "<<cur->R<<" "<<(cur->left== nullptr)<<" "<<(cur->right== nullptr)<<std::endl;
+        return merge_res(res_left, res_right, K);
     }
 
 

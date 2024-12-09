@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "IndexFilter.h"
 #include "Index1D.h"
+
 using namespace std;
 
 int main(int argc, char *argv[]) {
@@ -22,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     int ind;
     int iarg = 0;
-    unsigned length_bound = 1000, K, efSearch;
+    unsigned length_bound = 1000, K;
     opterr = 1;    //getopt error message (off: 0)
 
     char dataset[256] = "";
@@ -32,7 +33,7 @@ int main(int argc, char *argv[]) {
     char query_path[256] = "";
     char result_path[256] = "";
     while (iarg != -1) {
-        iarg = getopt_long(argc, argv, "d:s:l:k:e:", longopts, &ind);
+        iarg = getopt_long(argc, argv, "d:s:l:k:", longopts, &ind);
         switch (iarg) {
             case 'd':
                 if (optarg) {
@@ -50,73 +51,55 @@ int main(int argc, char *argv[]) {
             case 'k':
                 if (optarg) K = atoi(optarg);
                 break;
-            case 'e':
-                if (optarg) efSearch = atoi(optarg);
-                break;
         }
     }
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(result_path, "./results/%s_hnsw1D.log",dataset);
+    sprintf(result_path, "./results/%s/%s_hnsw1D.log", dataset, dataset);
     sprintf(index_path, "./DATA/%s/%s_1D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
     Matrix<float> Q(query_path);
     Index1D hnsw1D(X.n, X.d);
-    std::cerr<<index_path<<std::endl;
+    std::cerr << index_path << std::endl;
     hnsw1D.load_1D_index(index_path);
 
     srand(0);
     double segment_recall = 0.0;
-    double all_index_search_time = 0.0, all_brute_search_time = 0.0;
-    unsigned long long brute_node_calc = 0;
+    double all_index_search_time = 0.0;
     std::cerr << "test begin" << std::endl;
     std::ofstream fout(result_path, std::ios::app);
-    for (int i = 0; i < Q.n; i++) {
-        unsigned L = 0;
-        unsigned R =  rand()%1000000;
-        if (R >= X.n) R = X.n - 1;
-        brute_node_calc += (R - L + 1);
+    std::vector<SegQuery> SegQVec;
+    std::vector<std::vector<unsigned>> gt;
+    unsigned query_num = 1000;
+    generata_half_range_ground_truth_with_fix_length(query_num, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
+    std::vector efSearch{1, 2, 4, 8, 16, 32, 50, 64, 128, 150, 256, 300};
+    for (auto ef: efSearch) {
+        segment_recall = 0;
+        all_index_search_time = 0;
+        for (int i = 0; i < query_num; i++) {
+            ResultQueue ans1;
 
-        SegQuery SeQ(L, R, Q.data + i * Q.d);
-        ResultQueue ans1, ans2;
+            auto s = chrono::high_resolution_clock::now();
+            ans1 = hnsw1D.naive_range_search(SegQVec[i], K, ef);
+            auto e = chrono::high_resolution_clock::now();
+            chrono::duration<double> diff = e - s;
+            double time_slap1 = diff.count();
 
-        auto s = chrono::high_resolution_clock::now();
-        ans1 = hnsw1D.naive_range_search(SeQ, K, efSearch);
-        auto e = chrono::high_resolution_clock::now();
-        chrono::duration<double> diff = e - s;
-        double time_slap1 = diff.count();
-
-        s = chrono::high_resolution_clock::now();
-        ans2 = bruteforce_range_search(SeQ, X.data, X.d, K);
-        e = chrono::high_resolution_clock::now();
-        diff = e - s;
-        double time_slap2 = diff.count();
-
-
-        double segment = 0;
-        unordered_map<unsigned, bool> mp;
-        mp.clear();
-        float dist_bound = 0;
-        while(!ans2.empty()){
-            auto u = ans2.top();
-            mp[u.second] = true, dist_bound = std::max(dist_bound, u.first);
-            ans2.pop();
+            double segment = 0;
+            float dist_bound = sqr_dist(SegQVec[i].data_, X.data + gt[i][K - 1] * X.d, X.d);
+            while (!ans1.empty()) {
+                auto v = ans1.top();
+                if (v.first <= dist_bound) segment += 1.0;
+                ans1.pop();
+            }
+            segment /= K;
+            segment_recall += segment;
+            all_index_search_time += time_slap1;
         }
-        while(!ans1.empty()) {
-            auto v = ans1.top();
-            if (v.first <= dist_bound) segment += 1.0;
-            ans1.pop();
-        }
-        segment /= K;
-        segment_recall += segment;
-        all_index_search_time += time_slap1;
-        all_brute_search_time += time_slap2;
+        segment_recall /= (double) query_num;
+        double Qps = (double)query_num /all_index_search_time;
+        fout<<"("<<segment_recall*100<<","<<Qps<<")"<<std::endl;
     }
-    fout << "efSearch:: " << efSearch << std::endl;
-    fout << "ave length:: " << brute_node_calc /Q.n << std::endl;
-    fout << index_dist_calc << " " << brute_node_calc << " " << filter_dist_calc << std::endl;
-    fout << "segment recall:: " << segment_recall /Q.n << std::endl;
-    fout << "index search time:: " << all_index_search_time << " brute search time:: " << all_brute_search_time << std::endl;
     return 0;
 }
 

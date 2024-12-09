@@ -56,6 +56,12 @@ struct Neighbor {
 };
 
 struct SegQuery {
+    SegQuery() {
+        L = 0;
+        R = 0;
+        data_ = nullptr;
+    }
+
     SegQuery(unsigned left_range, unsigned right_range, float *data) {
         L = left_range;
         R = right_range;
@@ -92,17 +98,122 @@ bool isFileExists_ifstream(const char *name) {
     return f.good();
 }
 
+inline float sqr_dist(float *d, float *q, uint32_t L) {
+    float PORTABLE_ALIGN32 TmpRes[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t num_blk16 = L >> 4;
+    uint32_t l = L & 0b1111;
+
+    __m256 diff, v1, v2;
+    __m256 sum = _mm256_set1_ps(0);
+    for (int i = 0; i < num_blk16; i++) {
+        v1 = _mm256_loadu_ps(d);
+        v2 = _mm256_loadu_ps(q);
+        d += 8;
+        q += 8;
+        diff = _mm256_sub_ps(v1, v2);
+        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
+
+        v1 = _mm256_loadu_ps(d);
+        v2 = _mm256_loadu_ps(q);
+        d += 8;
+        q += 8;
+        diff = _mm256_sub_ps(v1, v2);
+        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
+    }
+    for (int i = 0; i < l / 8; i++) {
+        v1 = _mm256_loadu_ps(d);
+        v2 = _mm256_loadu_ps(q);
+        d += 8;
+        q += 8;
+        diff = _mm256_sub_ps(v1, v2);
+        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
+    }
+    _mm256_store_ps(TmpRes, sum);
+
+    float ret = TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3] + TmpRes[4] + TmpRes[5] + TmpRes[6] + TmpRes[7];
+
+    for (int i = 0; i < l % 8; i++) {
+        float tmp = (*q) - (*d);
+        ret += tmp * tmp;
+        d++;
+        q++;
+    }
+    return ret;
+}
+
+ResultQueue bruteforce_range_search(SegQuery Q, float *base, unsigned D, unsigned K) {
+    ResultQueue res;
+    for (unsigned i = Q.L; i <= Q.R; i++) {
+        float dist = sqr_dist(Q.data_, base + i * D, D);
+        if (res.size() < K)
+            res.emplace(dist, i);
+        else if (dist < res.top().first) {
+            res.pop();
+            res.emplace(dist, i);
+        }
+    }
+    return res;
+}
+
+void generata_range_ground_truth_with_fix_length(unsigned num, unsigned length,
+                                                 unsigned D, unsigned K, float *base, float *query,
+                                                 std::vector<SegQuery> &Q, std::vector<std::vector<unsigned >> &gt) {
+    Q.resize(num);
+    gt.resize(num);
+    for (int i = 0; i < num; i++) {
+        unsigned L = rand() % length;
+        unsigned R = L + length;
+        Q[i].L = L;
+        Q[i].R = R;
+        Q[i].data_ = query + i * D;
+        auto res = bruteforce_range_search(Q[i], base, D, K);
+        gt[i].resize(K);
+        unsigned gt_back = K-1;
+        while(!res.empty()){
+            gt[i][gt_back] = res.top().second;
+            res.pop();
+            gt_back--;
+        }
+    }
+    std::cerr<<"Ground Truth Finished"<<std::endl;
+}
+
+void generata_half_range_ground_truth_with_fix_length(unsigned num, unsigned length,
+                                                 unsigned D, unsigned K, float *base, float *query,
+                                                 std::vector<SegQuery> &Q, std::vector<std::vector<unsigned >> &gt) {
+    Q.resize(num);
+    gt.resize(num);
+    for (int i = 0; i < num; i++) {
+        unsigned L = 0;
+        unsigned R = length;
+        Q[i].L = L;
+        Q[i].R = R;
+        Q[i].data_ = query + i * D;
+        auto res = bruteforce_range_search(Q[i], base, D, K);
+        gt[i].resize(K);
+        unsigned gt_back = K-1;
+        while(!res.empty()){
+            gt[i][gt_back] = res.top().second;
+            res.pop();
+            gt_back--;
+        }
+    }
+    std::cerr<<"Ground Truth Finished"<<std::endl;
+}
+
 
 inline std::priority_queue<std::pair<float, hnswlib::labeltype> >
 merge_res(std::priority_queue<std::pair<float, hnswlib::labeltype> > res1,
-          std::priority_queue<std::pair<float, hnswlib::labeltype> > res2) {
-    while(!res2.empty()){
+          std::priority_queue<std::pair<float, hnswlib::labeltype> > res2,
+          unsigned K) {
+    while (!res2.empty()) {
         res1.emplace(res2.top());
         res2.pop();
-        res1.pop();
     }
+    while (res1.size() > K) res1.pop();
     return res1;
 }
+
 
 void load_float_data(char *filename, float *&data, unsigned &num,
                      unsigned &dim) {  // load data with sift10K pattern
@@ -214,62 +325,7 @@ merge_sort(std::vector<std::pair<float, unsigned> > &left, std::vector<std::pair
     return ans;
 }
 
-inline float sqr_dist(float *d, float *q, uint32_t L) {
-    float PORTABLE_ALIGN32 TmpRes[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    uint32_t num_blk16 = L >> 4;
-    uint32_t l = L & 0b1111;
 
-    __m256 diff, v1, v2;
-    __m256 sum = _mm256_set1_ps(0);
-    for (int i = 0; i < num_blk16; i++) {
-        v1 = _mm256_loadu_ps(d);
-        v2 = _mm256_loadu_ps(q);
-        d += 8;
-        q += 8;
-        diff = _mm256_sub_ps(v1, v2);
-        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
-
-        v1 = _mm256_loadu_ps(d);
-        v2 = _mm256_loadu_ps(q);
-        d += 8;
-        q += 8;
-        diff = _mm256_sub_ps(v1, v2);
-        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
-    }
-    for (int i = 0; i < l / 8; i++) {
-        v1 = _mm256_loadu_ps(d);
-        v2 = _mm256_loadu_ps(q);
-        d += 8;
-        q += 8;
-        diff = _mm256_sub_ps(v1, v2);
-        sum = _mm256_add_ps(sum, _mm256_mul_ps(diff, diff));
-    }
-    _mm256_store_ps(TmpRes, sum);
-
-    float ret = TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3] + TmpRes[4] + TmpRes[5] + TmpRes[6] + TmpRes[7];
-
-    for (int i = 0; i < l % 8; i++) {
-        float tmp = (*q) - (*d);
-        ret += tmp * tmp;
-        d++;
-        q++;
-    }
-    return ret;
-}
-
-ResultQueue bruteforce_range_search(SegQuery Q, float *base, unsigned D, unsigned K) {
-    ResultQueue res;
-    for (unsigned i = Q.L; i <= Q.R; i++) {
-        float dist = sqr_dist(Q.data_, base + i * D, D);
-        if (res.size() < K)
-            res.emplace(dist, i);
-        else if (dist < res.top().first) {
-            res.pop();
-            res.emplace(dist, i);
-        }
-    }
-    return res;
-}
 
 #ifndef WIN32
 

@@ -1,18 +1,11 @@
-cd ..
+source set.sh
 
-for data in {sift,gist,deep1M}; do
-  for index_type in {hnsw,ivf}; do
+for data in "${datasets[@]}"; do
+  for L in {500000,250000,125000,10000,5000}; do
 
-    DATA=/home/DATA/vector_data
-    data_path="${DATA}/${data}/${data}_base.fvecs"
-    query_path="${DATA}/${data}/${data}_query.fvecs"
-    index_path="./DATA/faiss_${data}.${index_type}"
-    segment_path="./DATA/${data}_${index_type}_segment.log"
-    for bound in {100000,200000,400000}; do
-      for efSearch in {8,32,64,96,128,256}; do
-        ./cmake-build-debug/test_segment_${index_type} -n ${data_path} -q ${query_path} -i ${index_path} -r ${segment_path} -b ${bound} -s ${efSearch} -l "./logger/${data}_${index_type}_result_${bound}.log" &
-      done
-      wait
-    done
+  ./cmake-build-debug/src/test_search_hnsw1D -d ${data} -s "${store_path}/${data}/" -l 100000 -k 1 -e 50
+
+  ./cmake-build-debug/src/test_search_hnsw2D -d ${data} -s "${store_path}/${data}/" -l 100000 -k 1 -e 50
   done
+
 done
