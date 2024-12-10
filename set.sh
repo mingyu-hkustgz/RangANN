@@ -1,4 +1,4 @@
-#export datasets=("gist" "msong" "deep1M" "tiny5m" "msmarc-small")
-export datasets=("sift")
+#export datasets=("sift" "gist" "deep1M" "msong" "deep100M")
+export datasets=("gist")
 export store_path=/DATA
 export result_path=./results

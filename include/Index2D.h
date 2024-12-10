@@ -170,7 +170,7 @@ public:
 
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
     half_blood_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *&cur) {
-        if (cur->L <= Q.L && Q.R <= cur->R && (Q.R - Q.L + 1) * 2 > (cur->R - cur->L + 1)) {
+        if (cur->L <= Q.L && Q.R <= cur->R && (Q.R - Q.L) * 2 > (cur->R - cur->L + 1)) {
             RangeFilter range(Q.L-cur->L, Q.R-cur->L);
             cur->appr_alg->setEf(nprobs);
             return cur->appr_alg->searchKnn(Q.data_, K, &range);
@@ -199,21 +199,15 @@ public:
 
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
     segment_tree_search(SegQuery Q, unsigned K, unsigned nprobs, SegmentTree *&cur) {
-        //std::cerr<<"TOP::  "<<cur->L<<" "<<cur->R<<" "<<Q.L<<" "<<Q.R<<std::endl;
         if (Q.L <= cur->L && cur->R <= Q.R) {
-            //std::cerr<<"Inner Check:: "<<cur->L<<" "<<cur->R<<std::endl;
             if (cur->appr_alg == nullptr){
-                std::cerr<<"BRUTE Search:: "<<cur->L<<" "<<cur->R<<std::endl;
                 return bruteforce_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), cur->L, cur->R,
                                          K);
             }
-            //std::cerr<<"STILLL HNSW"<<std::endl;
             cur->appr_alg->setEf(nprobs);
-            //std::cerr<<"HNSW Search:: "<<cur->L<<" "<<cur->R<<std::endl;
             return cur->appr_alg->searchKnn(Q.data_, K);
         }
         if (cur->left == nullptr && cur->right == nullptr) {
-//            std::cerr<<"BRUTE Search:: "<<cur->L<<" "<<cur->R<<std::endl;
             return bruteforce_search(Q.data_, (float *) (cur->appr_alg->static_base_data_), std::max(Q.L, cur->L),
                                            std::min(Q.R, cur->R), K);
         }
@@ -229,9 +223,6 @@ public:
                 res_right = segment_tree_search(Q, K, nprobs, cur->right);
             }
         }
-//        if(!res_left.empty()) std::cerr<<"L :: "<<res_left.top().first<<" "<<res_left.top().second<<std::endl;
-//        if(!res_right.empty()) std::cerr<<"R :: "<<res_right.top().first<<" "<<res_right.top().second<<std::endl;
-//        std::cerr<<"~~~~~~~~~~~~:: "<<cur->L<<" "<<cur->R<<" "<<(cur->left== nullptr)<<" "<<(cur->right== nullptr)<<std::endl;
         return merge_res(res_left, res_right, K);
     }
 

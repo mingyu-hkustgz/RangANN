@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     int ind;
     int iarg = 0;
-    unsigned length_bound = 1000, K;
+    unsigned length_bound = 1000, K, ef_base;
     opterr = 1;    //getopt error message (off: 0)
 
     char dataset[256] = "";
@@ -52,12 +52,15 @@ int main(int argc, char *argv[]) {
             case 'k':
                 if (optarg) K = atoi(optarg);
                 break;
+            case 'e':
+                if (optarg) ef_base = atoi(optarg);
+                break;
         }
     }
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(seg_result_path, "./results/%s/%s_hnsw_seg_2D.log", dataset, dataset);
-    sprintf(half_result_path, "./results/%s/%s_hnsw_half_2D.log", dataset, dataset);
+    sprintf(seg_result_path, "./results/%s/%s_hnsw_seg_2D_%d.log", dataset, dataset, length_bound);
+    sprintf(half_result_path, "./results/%s/%s_hnsw_half_2D_%d.log", dataset, dataset, length_bound);
     sprintf(index_path, "./DATA/%s/%s_2D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
     Matrix<float> Q(query_path);
@@ -78,6 +81,7 @@ int main(int argc, char *argv[]) {
     generata_range_ground_truth_with_fix_length(query_num, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
     std::vector efSearch{1, 2, 4, 8, 16, 32, 50, 64, 128, 150, 256, 300};
     for (auto ef: efSearch) {
+        ef *= ef_base;
         segment_recall = 0;
         half_blood_recall = 0;
         all_index_search_time = 0;
@@ -100,7 +104,7 @@ int main(int argc, char *argv[]) {
             double segment = 0, half = 0;
             while (!ans1.empty()) {
                 auto v = ans1.top();
-                if (v.first <= dist_bound) segment += 1.0;
+                if (v.first <= dist_bound + 1e-6) segment += 1.0;
                 ans1.pop();
             }
             segment /= K;
@@ -108,7 +112,7 @@ int main(int argc, char *argv[]) {
             all_index_search_time += seg_time;
             while (!ans2.empty()) {
                 auto v = ans2.top();
-                if (v.first <= dist_bound) half += 1.0;
+                if (v.first <= dist_bound + 1e-6) half += 1.0;
                 ans2.pop();
             }
             half /= K;
@@ -117,11 +121,11 @@ int main(int argc, char *argv[]) {
 
         }
         segment_recall /= (double) query_num;
-        double Seg_Qps = (double)query_num /all_index_search_time;
+        double Seg_Qps = (double) query_num / all_index_search_time;
         half_blood_recall /= (double) query_num;
-        double Half_Qps = (double)query_num /all_half_search_time;
-        segout<<"("<<segment_recall*100<<","<<Seg_Qps<<")"<<std::endl;
-        halfout<<"("<<half_blood_recall*100<<","<<Half_Qps<<")"<<std::endl;
+        double Half_Qps = (double) query_num / all_half_search_time;
+        segout << "(" << segment_recall * 100 << "," << Seg_Qps << ")" << std::endl;
+        halfout << "(" << half_blood_recall * 100 << "," << Half_Qps << ")" << std::endl;
     }
     return 0;
 }

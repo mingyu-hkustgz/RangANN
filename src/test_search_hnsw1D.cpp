@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     int ind;
     int iarg = 0;
-    unsigned length_bound = 1000, K;
+    unsigned length_bound = 1000, K, ef_base;
     opterr = 1;    //getopt error message (off: 0)
 
     char dataset[256] = "";
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     char query_path[256] = "";
     char result_path[256] = "";
     while (iarg != -1) {
-        iarg = getopt_long(argc, argv, "d:s:l:k:", longopts, &ind);
+        iarg = getopt_long(argc, argv, "d:s:l:k:e:", longopts, &ind);
         switch (iarg) {
             case 'd':
                 if (optarg) {
@@ -51,11 +51,14 @@ int main(int argc, char *argv[]) {
             case 'k':
                 if (optarg) K = atoi(optarg);
                 break;
+            case 'e':
+                if (optarg) ef_base = atoi(optarg);
+                break;
         }
     }
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(result_path, "./results/%s/%s_hnsw1D.log", dataset, dataset);
+    sprintf(result_path, "./results/%s/%s_hnsw1D_half_%d.log", dataset, dataset, length_bound);
     sprintf(index_path, "./DATA/%s/%s_1D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
     Matrix<float> Q(query_path);
@@ -74,6 +77,7 @@ int main(int argc, char *argv[]) {
     generata_half_range_ground_truth_with_fix_length(query_num, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
     std::vector efSearch{1, 2, 4, 8, 16, 32, 50, 64, 128, 150, 256, 300};
     for (auto ef: efSearch) {
+        ef *= ef_base;
         segment_recall = 0;
         all_index_search_time = 0;
         for (int i = 0; i < query_num; i++) {
@@ -89,7 +93,7 @@ int main(int argc, char *argv[]) {
             float dist_bound = sqr_dist(SegQVec[i].data_, X.data + gt[i][K - 1] * X.d, X.d);
             while (!ans1.empty()) {
                 auto v = ans1.top();
-                if (v.first <= dist_bound) segment += 1.0;
+                if (v.first <= dist_bound + 1e-6) segment += 1.0;
                 ans1.pop();
             }
             segment /= K;
@@ -97,8 +101,8 @@ int main(int argc, char *argv[]) {
             all_index_search_time += time_slap1;
         }
         segment_recall /= (double) query_num;
-        double Qps = (double)query_num /all_index_search_time;
-        fout<<"("<<segment_recall*100<<","<<Qps<<")"<<std::endl;
+        double Qps = (double) query_num / all_index_search_time;
+        fout << "(" << segment_recall * 100 << "," << Qps << ")" << std::endl;
     }
     return 0;
 }
