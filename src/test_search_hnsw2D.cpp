@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
     }
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(seg_result_path, "./results/%s/%s_hnsw_seg_2D_%d.log", dataset, dataset, length_bound);
-    sprintf(half_result_path, "./results/%s/%s_hnsw_half_2D_%d.log", dataset, dataset, length_bound);
+    sprintf(seg_result_path, "./results/%s/%s_SEG_%d.log", dataset, dataset, length_bound);
+    sprintf(half_result_path, "./results/%s/%s_HBI2D_%d.log", dataset, dataset, length_bound);
     sprintf(index_path, "./DATA/%s/%s_2D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
     Matrix<float> Q(query_path);
@@ -125,9 +125,8 @@ int main(int argc, char *argv[]) {
         double Seg_Qps = (double) query_num / all_index_search_time;
         half_blood_recall /= (double) query_num;
         double Half_Qps = (double) query_num / all_half_search_time;
-        std::cerr<< "Please Not the Qps need Times 1000"<<std::endl;
-        segout << "(" << segment_recall * 100 << "," << Seg_Qps/1000 << ")" << std::endl;
-        halfout << "(" << half_blood_recall * 100 << "," << Half_Qps/1000 << ")" << std::endl;
+        segout << segment_recall * 100 << " " << Seg_Qps << std::endl;
+        halfout << half_blood_recall * 100 << " " << Half_Qps << std::endl;
     }
     return 0;
 }

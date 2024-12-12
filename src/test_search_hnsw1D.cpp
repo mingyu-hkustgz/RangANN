@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(result_path, "./results/%s/%s_hnsw1D_half_%d.log", dataset, dataset, length_bound);
+    sprintf(result_path, "./results/%s/%s_HBI1D_%d.log", dataset, dataset, length_bound);
     sprintf(index_path, "./DATA/%s/%s_1D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
     Matrix<float> Q(query_path);
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
         }
         segment_recall /= (double) query_num;
         double Qps = (double) query_num / all_index_search_time;
-        fout << "(" << segment_recall * 100 << "," << Qps/1000 << ")" << std::endl;
+        fout << segment_recall * 100 << " " << Qps << std::endl;
     }
     return 0;
 }

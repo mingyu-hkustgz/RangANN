@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(RangANN)
+project(Half-Blood-Index)
 
 include_directories(include)
 
