@@ -63,7 +63,7 @@ ylabel=Qpsx''' + str(base_log) + r''',
 title={range=$''' + str(item / data_num) + r'''\times$N},
 label style={font=\scriptsize},
 tick label style={font=\scriptsize},
-tick label style={font=\scriptsize},
+title style={font=\scriptsize},
 ymajorgrids=true,
 xmajorgrids=true,
 grid style=dashed,
@@ -111,7 +111,7 @@ ylabel=Qpsx''' + str(base_log) + r''',
 title={range=$''' + str(item / data_num) + r'''\times$N},
 label style={font=\scriptsize},
 tick label style={font=\scriptsize},
-tick label style={font=\scriptsize},
+title style={font=\scriptsize},
 ymajorgrids=true,
 xmajorgrids=true,
 grid style=dashed,
@@ -149,7 +149,7 @@ grid style=dashed,
                 print("% " + dataset, file=out_put_file)
                 print('\\subfigure[' + real_data + ' (Large Range)]{', file=out_put_file)
                 for item in range_map[method]:
-                    if item <= 125000:
+                    if item < 125000:
                         break
                     print(r'''
 \begin{tikzpicture}[scale=1]
@@ -161,7 +161,7 @@ ylabel=Qpsx''' + str(base_log) + r''',
 title={range=$2^{-''' + str(math.log(data_num/item,2)) + r'''}$},
 label style={font=\scriptsize},
 tick label style={font=\scriptsize},
-tick label style={font=\scriptsize},
+title style={font=\scriptsize},
 ymajorgrids=true,
 xmajorgrids=true,
 grid style=dashed,
@@ -205,7 +205,7 @@ grid style=dashed,
 
                 print('\\subfigure[' + real_data + ' (Small Range)]{', file=out_put_file)
                 for item in range_map[method]:
-                    if item > 125000:
+                    if item >= 125000:
                         continue
                     print(r'''
 \begin{tikzpicture}[scale=1]
@@ -217,11 +217,12 @@ ylabel=Qpsx''' + str(base_log) + r''',
 title={range=$2^{-''' + str(round(math.log(data_num/item,2),0)) + r'''}$},
 label style={font=\scriptsize},
 tick label style={font=\scriptsize},
+title style={font=\scriptsize},
 ymajorgrids=true,
 xmajorgrids=true,
 grid style=dashed,
-                ]''', file=out_put_file)
-                    for index in half_index:
+]''', file=out_put_file)
+                    for index in general_index:
                         result_path = f"./results/{dataset}/{dataset}_{index}_{str(item)}.log"
                         if not os.path.exists(result_path):
                             continue
