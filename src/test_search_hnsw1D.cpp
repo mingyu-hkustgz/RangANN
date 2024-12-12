@@ -76,6 +76,7 @@ int main(int argc, char *argv[]) {
     unsigned query_num = 1000;
     generata_half_range_ground_truth_with_fix_length(query_num, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
     std::vector efSearch{1, 2, 4, 8, 16, 32, 50, 64, 128, 150, 256, 300};
+    std::cerr<<"Index Memory:: "<<getPeakRSS()<<std::endl;
     for (auto ef: efSearch) {
         ef *= ef_base;
         segment_recall = 0;
@@ -102,7 +103,7 @@ int main(int argc, char *argv[]) {
         }
         segment_recall /= (double) query_num;
         double Qps = (double) query_num / all_index_search_time;
-        fout << "(" << segment_recall * 100 << "," << Qps << ")" << std::endl;
+        fout << "(" << segment_recall * 100 << "," << Qps/1000 << ")" << std::endl;
     }
     return 0;
 }

@@ -155,13 +155,13 @@ ResultQueue bruteforce_range_search(SegQuery Q, float *base, unsigned D, unsigne
     return res;
 }
 
-void generata_range_ground_truth_with_fix_length(unsigned num, unsigned length,
+void generata_range_ground_truth_with_fix_length(unsigned query_num, unsigned base_num, unsigned length,
                                                  unsigned D, unsigned K, float *base, float *query,
                                                  std::vector<SegQuery> &Q, std::vector<std::vector<unsigned >> &gt) {
-    Q.resize(num);
-    gt.resize(num);
-    for (int i = 0; i < num; i++) {
-        unsigned L = rand() % length;
+    Q.resize(query_num);
+    gt.resize(query_num);
+    for (int i = 0; i < query_num; i++) {
+        unsigned L = rand() %(base_num - length);
         unsigned R = L + length;
         Q[i].L = L;
         Q[i].R = R;
@@ -178,12 +178,12 @@ void generata_range_ground_truth_with_fix_length(unsigned num, unsigned length,
     std::cerr<<"Ground Truth Finished"<<std::endl;
 }
 
-void generata_half_range_ground_truth_with_fix_length(unsigned num, unsigned length,
+void generata_half_range_ground_truth_with_fix_length(unsigned query_num, unsigned length,
                                                  unsigned D, unsigned K, float *base, float *query,
                                                  std::vector<SegQuery> &Q, std::vector<std::vector<unsigned >> &gt) {
-    Q.resize(num);
-    gt.resize(num);
-    for (int i = 0; i < num; i++) {
+    Q.resize(query_num);
+    gt.resize(query_num);
+    for (int i = 0; i < query_num; i++) {
         unsigned L = 0;
         unsigned R = length;
         Q[i].L = L;

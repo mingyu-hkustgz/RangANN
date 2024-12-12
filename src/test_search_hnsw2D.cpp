@@ -78,8 +78,9 @@ int main(int argc, char *argv[]) {
     std::vector<SegQuery> SegQVec;
     std::vector<std::vector<unsigned>> gt;
     unsigned query_num = 1000;
-    generata_range_ground_truth_with_fix_length(query_num, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
+    generata_range_ground_truth_with_fix_length(query_num, X.n, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
     std::vector efSearch{1, 2, 4, 8, 16, 32, 50, 64, 128, 150, 256, 300};
+    std::cerr<<"Index Memory:: "<<getPeakRSS()<<std::endl;
     for (auto ef: efSearch) {
         ef *= ef_base;
         segment_recall = 0;
@@ -124,8 +125,9 @@ int main(int argc, char *argv[]) {
         double Seg_Qps = (double) query_num / all_index_search_time;
         half_blood_recall /= (double) query_num;
         double Half_Qps = (double) query_num / all_half_search_time;
-        segout << "(" << segment_recall * 100 << "," << Seg_Qps << ")" << std::endl;
-        halfout << "(" << half_blood_recall * 100 << "," << Half_Qps << ")" << std::endl;
+        std::cerr<< "Please Not the Qps need Times 1000"<<std::endl;
+        segout << "(" << segment_recall * 100 << "," << Seg_Qps/1000 << ")" << std::endl;
+        halfout << "(" << half_blood_recall * 100 << "," << Half_Qps/1000 << ")" << std::endl;
     }
     return 0;
 }
