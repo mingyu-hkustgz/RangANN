@@ -1,6 +1,7 @@
 DATA
 results
 build
+data
 cmake-build-debug
 .idea
 __pycache__

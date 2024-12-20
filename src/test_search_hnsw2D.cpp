@@ -31,8 +31,7 @@ int main(int argc, char *argv[]) {
     char index_path[256] = "";
     char data_path[256] = "";
     char query_path[256] = "";
-    char seg_result_path[256] = "";
-    char half_result_path[256] = "";
+    char result_path[256] = "";
     while (iarg != -1) {
         iarg = getopt_long(argc, argv, "d:s:l:k:e:", longopts, &ind);
         switch (iarg) {
@@ -59,8 +58,11 @@ int main(int argc, char *argv[]) {
     }
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(seg_result_path, "./results/%s/%s_SEG_%d.log", dataset, dataset, length_bound);
-    sprintf(half_result_path, "./results/%s/%s_HBI2D_%d.log", dataset, dataset, length_bound);
+#ifdef HALF_SPLIT
+    sprintf(result_path, "./results/%s/%s_HBI2D_%d.log", dataset, dataset, length_bound);
+#else
+    sprintf(result_path, "./results/%s/%s_SEG_%d.log", dataset, dataset, length_bound);
+#endif
     sprintf(index_path, "./DATA/%s/%s_2D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
     Matrix<float> Q(query_path);
@@ -68,13 +70,11 @@ int main(int argc, char *argv[]) {
     Index2D hnsw2D(X.n, X.d);
     std::cerr << index_path << std::endl;
     hnsw2D.load_index(index_path);
-
     srand(0);
-    double segment_recall, half_blood_recall;
-    double all_index_search_time, all_half_search_time;
+    double segment_recall=0;
+    double all_index_search_time=0;
     std::cerr << "test begin" << std::endl;
-    std::ofstream segout(seg_result_path, std::ios::app);
-    std::ofstream halfout(half_result_path, std::ios::app);
+    std::ofstream out(result_path, std::ios::app);
     std::vector<SegQuery> SegQVec;
     std::vector<std::vector<unsigned>> gt;
     unsigned query_num = 1000;
@@ -84,25 +84,20 @@ int main(int argc, char *argv[]) {
     for (auto ef: efSearch) {
         ef *= ef_base;
         segment_recall = 0;
-        half_blood_recall = 0;
         all_index_search_time = 0;
-        all_half_search_time = 0;
         for (int i = 0; i < query_num; i++) {
             ResultQueue ans1, ans2;
-
             auto s = chrono::high_resolution_clock::now();
+#ifdef HALF_SPLIT
+            ans1 = hnsw2D.half_blood_search(SegQVec[i], K, ef, hnsw2D.root);
+#else
             ans1 = hnsw2D.segment_tree_search(SegQVec[i], K, ef, hnsw2D.root);
+#endif
             auto e = chrono::high_resolution_clock::now();
             chrono::duration<double> diff = e - s;
-            double seg_time = diff.count();
-
-            s = chrono::high_resolution_clock::now();
-            ans2 = hnsw2D.half_blood_search(SegQVec[i], K, ef, hnsw2D.root);
-            e = chrono::high_resolution_clock::now();
-            diff = e - s;
-            double half_time = diff.count();
+            double time_slap = diff.count();
             float dist_bound = sqr_dist(SegQVec[i].data_, X.data + gt[i][K - 1] * X.d, X.d);
-            double segment = 0, half = 0;
+            double segment = 0;
             while (!ans1.empty()) {
                 auto v = ans1.top();
                 if (v.first <= dist_bound + 1e-6) segment += 1.0;
@@ -110,23 +105,11 @@ int main(int argc, char *argv[]) {
             }
             segment /= K;
             segment_recall += segment;
-            all_index_search_time += seg_time;
-            while (!ans2.empty()) {
-                auto v = ans2.top();
-                if (v.first <= dist_bound + 1e-6) half += 1.0;
-                ans2.pop();
-            }
-            half /= K;
-            half_blood_recall += half;
-            all_half_search_time += half_time;
-
+            all_index_search_time += time_slap;
         }
         segment_recall /= (double) query_num;
         double Seg_Qps = (double) query_num / all_index_search_time;
-        half_blood_recall /= (double) query_num;
-        double Half_Qps = (double) query_num / all_half_search_time;
-        segout << segment_recall * 100 << " " << Seg_Qps << std::endl;
-        halfout << half_blood_recall * 100 << " " << Half_Qps << std::endl;
+        out << segment_recall * 100 << " " << Seg_Qps << std::endl;
     }
     return 0;
 }
