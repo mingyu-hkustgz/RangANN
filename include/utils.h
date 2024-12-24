@@ -35,7 +35,7 @@
 
 #endif
 #define RANG_BOUND 1024
-
+#define EPS_GROUND 1e-4
 #ifndef RANGANN_UTILS_H
 
 unsigned index_dist_calc = 0;

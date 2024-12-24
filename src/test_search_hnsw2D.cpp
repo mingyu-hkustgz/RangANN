@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
             double segment = 0;
             while (!ans1.empty()) {
                 auto v = ans1.top();
-                if (v.first <= dist_bound + 1e-6) segment += 1.0;
+                if (v.first <= dist_bound + EPS_GROUND && (SegQVec[i].L<=v.second && v.second<=SegQVec[i].R)) segment += 1.0;
                 ans1.pop();
             }
             segment /= K;

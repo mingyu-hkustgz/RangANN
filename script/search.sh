@@ -10,6 +10,8 @@ for L in {800000,600000,400000,200000,100000,50000}; do
       E=10
     elif [ $data == "msmarc-small" ]; then
       E=10
+    elif [ $data == "glove100d" ]; then
+      E=100
     elif [ $data == "deep100M" ]; then
       E=20
     elif [ $data == "sift100m" ]; then
@@ -29,6 +31,8 @@ for data in "${datasets[@]}"; do
       E=5
     elif [ $data == "msmarc-small" ]; then
       E=10
+    elif [ $data == "glove100d" ]; then
+      E=100
     elif [ $data == "deep100M" ]; then
       E=20
     elif [ $data == "sift100m" ]; then
