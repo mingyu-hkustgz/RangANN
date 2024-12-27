@@ -59,9 +59,9 @@ int main(int argc, char *argv[]) {
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
 #ifdef HALF_SPLIT
-    sprintf(result_path, "./results/%s/%s_HBI2D_%d.log", dataset, dataset, length_bound);
+    sprintf(result_path, "./results@%d/%s/%s_HBI2D_%d.log", K, dataset, dataset, length_bound);
 #else
-    sprintf(result_path, "./results/%s/%s_SEG_%d.log", dataset, dataset, length_bound);
+    sprintf(result_path, "./results@%d/%s/%s_SEG_%d.log", K, dataset, dataset, length_bound);
 #endif
     sprintf(index_path, "./DATA/%s/%s_2D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
@@ -71,8 +71,8 @@ int main(int argc, char *argv[]) {
     std::cerr << index_path << std::endl;
     hnsw2D.load_index(index_path);
     srand(0);
-    double segment_recall=0;
-    double all_index_search_time=0;
+    double segment_recall = 0;
+    double all_index_search_time = 0;
     std::cerr << "test begin" << std::endl;
     std::ofstream out(result_path, std::ios::app);
     std::vector<SegQuery> SegQVec;
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     unsigned query_num = 1000;
     generata_range_ground_truth_with_fix_length(query_num, X.n, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
     std::vector efSearch{1, 2, 4, 8, 16, 32, 50, 64, 128, 150, 256, 300};
-    std::cerr<<"Index Memory:: "<<getPeakRSS()<<std::endl;
+    std::cerr << "Index Memory:: " << getPeakRSS() << std::endl;
     for (auto ef: efSearch) {
         ef *= ef_base;
         segment_recall = 0;
@@ -96,12 +96,23 @@ int main(int argc, char *argv[]) {
             auto e = chrono::high_resolution_clock::now();
             chrono::duration<double> diff = e - s;
             double time_slap = diff.count();
-            float dist_bound = sqr_dist(SegQVec[i].data_, X.data + gt[i][K - 1] * X.d, X.d);
             double segment = 0;
-            while (!ans1.empty()) {
-                auto v = ans1.top();
-                if (v.first <= dist_bound + EPS_GROUND && (SegQVec[i].L<=v.second && v.second<=SegQVec[i].R)) segment += 1.0;
-                ans1.pop();
+            if (K == 1) {
+                float dist_bound = sqr_dist(SegQVec[i].data_, X.data + gt[i][K - 1] * X.d, X.d);
+                while (!ans1.empty()) {
+                    auto v = ans1.top();
+                    if (v.first <= dist_bound + EPS_GROUND &&
+                        (SegQVec[i].L <= v.second && v.second <= SegQVec[i].R))
+                        segment += 1.0;
+                    ans1.pop();
+                }
+            } else {
+                while (!ans1.empty()) {
+                    auto v = ans1.top();
+                    if (std::find(gt[i].begin(), gt[i].end(), v.second) != gt[i].end())
+                        segment += 1.0;
+                    ans1.pop();
+                }
             }
             segment /= K;
             segment_recall += segment;
@@ -111,6 +122,7 @@ int main(int argc, char *argv[]) {
         double Seg_Qps = (double) query_num / all_index_search_time;
         out << segment_recall * 100 << " " << Seg_Qps << std::endl;
     }
+
     return 0;
 }
 

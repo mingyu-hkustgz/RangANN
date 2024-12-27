@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
     sprintf(query_path, "%s%s_query.fvecs", source, dataset);
     sprintf(data_path, "%s%s_base.fvecs", source, dataset);
-    sprintf(result_path, "./results/%s/%s_HBI1D_%d.log", dataset, dataset, length_bound);
+    sprintf(result_path, "./results@%d/%s/%s_HBI1D_%d.log",K, dataset, dataset, length_bound);
     sprintf(index_path, "./DATA/%s/%s_1D.hnsw", dataset, dataset);
     Matrix<float> X(data_path);
     Matrix<float> Q(query_path);
@@ -91,11 +91,22 @@ int main(int argc, char *argv[]) {
             double time_slap1 = diff.count();
 
             double segment = 0;
-            float dist_bound = sqr_dist(SegQVec[i].data_, X.data + gt[i][K - 1] * X.d, X.d);
-            while (!ans1.empty()) {
-                auto v = ans1.top();
-                if (v.first <= dist_bound + EPS_GROUND && (SegQVec[i].L<=v.second && v.second<=SegQVec[i].R)) segment += 1.0;
-                ans1.pop();
+            if (K == 1) {
+                float dist_bound = sqr_dist(SegQVec[i].data_, X.data + gt[i][K - 1] * X.d, X.d);
+                while (!ans1.empty()) {
+                    auto v = ans1.top();
+                    if (v.first <= dist_bound + EPS_GROUND &&
+                        (SegQVec[i].L <= v.second && v.second <= SegQVec[i].R))
+                        segment += 1.0;
+                    ans1.pop();
+                }
+            } else {
+                while (!ans1.empty()) {
+                    auto v = ans1.top();
+                    if (std::find(gt[i].begin(), gt[i].end(), v.second) != gt[i].end())
+                        segment += 1.0;
+                    ans1.pop();
+                }
             }
             segment /= K;
             segment_recall += segment;

@@ -11,7 +11,7 @@
 #include "hnswlib/hnswlib.h"
 
 #define HNSW_M 16
-#define HNSW_efConstruction 500
+#define HNSW_efConstruction 200
 
 
 class Index1D {

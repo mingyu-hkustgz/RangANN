@@ -162,7 +162,7 @@ void generata_range_ground_truth_with_fix_length(unsigned query_num, unsigned ba
     gt.resize(query_num);
     for (int i = 0; i < query_num; i++) {
         unsigned L = rand() %(base_num - length);
-        unsigned R = L + length;
+        unsigned R = L + length - 1;
         Q[i].L = L;
         Q[i].R = R;
         Q[i].data_ = query + i * D;
@@ -185,7 +185,7 @@ void generata_half_range_ground_truth_with_fix_length(unsigned query_num, unsign
     gt.resize(query_num);
     for (int i = 0; i < query_num; i++) {
         unsigned L = 0;
-        unsigned R = length;
+        unsigned R = (length-1);
         Q[i].L = L;
         Q[i].R = R;
         Q[i].data_ = query + i * D;

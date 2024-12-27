@@ -1,14 +1,14 @@
 source set.sh
 
 for data in "${datasets[@]}"; do
-for L in {800000,600000,400000,200000,100000,50000}; do
+for L in {50000,100000,400000,800000}; do
     if [ $data == "sift" ]; then
       E=1
     elif [ $data == "deep" ]; then
       E=5
-    elif [ $data == "msong" ]; then
+    elif [ $data == "audio" ]; then
       E=10
-    elif [ $data == "msmarc-small" ]; then
+    elif [ $data == "WIT" ]; then
       E=10
     elif [ $data == "glove100d" ]; then
       E=100
@@ -17,19 +17,19 @@ for L in {800000,600000,400000,200000,100000,50000}; do
     elif [ $data == "sift100m" ]; then
       E=20
     fi
-  ./build/src/test_search_hnsw1D -d ${data} -s "${store_path}/${data}/" -l $L -k 1 -e $E
+  ./build/src/test_search_hnsw1D -d ${data} -s "${store_path}/${data}/" -l $L -k 10 -e $E
 done
 done
 
 for data in "${datasets[@]}"; do
-  for L in {500000,250000,125000,62500,31250,15625,3906,1953}; do
+  for L in {500000,250000,125000,31250,15625,3906}; do
     if [ $data == "sift" ]; then
       E=1
-    elif [ $data == "msong" ]; then
-      E=10
     elif [ $data == "deep" ]; then
       E=5
-    elif [ $data == "msmarc-small" ]; then
+    elif [ $data == "WIT" ]; then
+      E=10
+    elif [ $data == "audio" ]; then
       E=10
     elif [ $data == "glove100d" ]; then
       E=100
@@ -38,7 +38,7 @@ for data in "${datasets[@]}"; do
     elif [ $data == "sift100m" ]; then
       E=20
     fi
-  ./build/src/test_search_hnsw2D_SEG -d ${data} -s "${store_path}/${data}/" -l $L -k 1 -e $E
-  ./build/src/test_search_hnsw2D_HALF -d ${data} -s "${store_path}/${data}/" -l $L -k 1 -e $E
+  ./build/src/test_search_hnsw2D_SEG -d ${data} -s "${store_path}/${data}/" -l $L -k 10 -e $E
+  ./build/src/test_search_hnsw2D_HALF -d ${data} -s "${store_path}/${data}/" -l $L -k 10 -e $E
 done
 done
