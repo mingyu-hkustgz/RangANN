@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     double segment_recall = 0.0;
     double all_index_search_time = 0.0;
     std::cerr << "test begin" << std::endl;
-    std::ofstream fout(result_path, std::ios::app);
+    std::ofstream fout(result_path);
     std::vector<SegQuery> SegQVec;
     std::vector<std::vector<unsigned>> gt;
     unsigned query_num = 1000;
