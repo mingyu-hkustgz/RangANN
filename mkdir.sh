@@ -1,9 +1,10 @@
 source set.sh
 mkdir ./DATA
+mkdir ./results
 mkdir ./results/time-log
 mkdir ./results/space-log
+mkdir ./results@1
 mkdir ./results@10
-mkdir ./results@20
 
 rm -rf build
 mkdir build
@@ -21,7 +22,7 @@ for dataset in "${datasets[@]}";
 do
   echo $dataset
   mkdir ./DATA/${dataset}
-  mkdir ./results@10/${dataset}
+  mkdir ./results@1/${dataset}
   mkdir ./results@10/${dataset}
   mkdir ./results/time-log/${dataset}
   mkdir ./results/space-log/${dataset}

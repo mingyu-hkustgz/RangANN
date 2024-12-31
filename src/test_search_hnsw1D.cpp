@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <getopt.h>
 #include "utils.h"
-#include "IndexFilter.h"
 #include "Index1D.h"
 
 using namespace std;
