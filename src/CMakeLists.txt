@@ -2,6 +2,10 @@ add_executable(test_build_hnsw1D test_build_hnsw1D.cpp)
 
 add_executable(test_build_hnsw2D test_build_hnsw2D.cpp)
 
+add_executable(test_build_hnsw2DF test_build_hnsw2DF.cpp)
+
+add_executable(test_search_hnsw2DF test_search_hnsw2DF.cpp)
+
 add_executable(test_search_hnsw1D test_search_hnsw1D.cpp)
 
 add_executable(test_search_hnsw2D_SEG test_search_hnsw2D.cpp)
