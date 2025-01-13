@@ -161,7 +161,9 @@ void generata_range_ground_truth_with_fix_length(unsigned query_num, unsigned ba
     Q.resize(query_num);
     gt.resize(query_num);
     for (int i = 0; i < query_num; i++) {
-        unsigned L = rand() %(base_num - length);
+        unsigned L = 0;
+        if(length!=base_num)
+            L = rand() %(base_num - length);
         unsigned R = L + length - 1;
         Q[i].L = L;
         Q[i].R = R;
