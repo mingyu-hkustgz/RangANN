@@ -30,3 +30,8 @@
 ## Index Size Note
 * For HBI1D-ESG1D we redundant store base vectors to keep with the origin hnswlib memory layout
 * For HBI2D-ESG2D we provide a static version of hnswlib that allow the share of same base vectors 
+
+## Evaluation Note
+* We found that there are duplicate points in data sets such as sift, so we judge that if the distance between the returned nearest neighbor (Top 1) and the groundtruth relative to the query is almost the same (<1e-4), we also consider that the nearest neighbor has been found.
+* For Top k, we still use the original recall calculation method
+

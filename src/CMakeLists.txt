@@ -4,6 +4,10 @@ add_executable(test_build_hnsw2D test_build_hnsw2D.cpp)
 
 add_executable(test_build_hnsw2DF test_build_hnsw2DF.cpp)
 
+add_executable(test_build_hnsw2DS test_build_hnsw2DS.cpp)
+
+add_executable(test_search_hnsw2DS test_search_hnsw2DS.cpp)
+
 add_executable(test_search_hnsw2DF test_search_hnsw2DF.cpp)
 
 add_executable(test_search_hnsw1D test_search_hnsw1D.cpp)
@@ -13,5 +17,3 @@ add_executable(test_search_hnsw2D_SEG test_search_hnsw2D.cpp)
 add_executable(test_search_hnsw2D_HALF test_search_hnsw2D.cpp)
 
 target_compile_definitions(test_search_hnsw2D_HALF PRIVATE HALF_SPLIT)
-
-add_executable(local_test_groundtruth local_test_groundtruth.cpp)
