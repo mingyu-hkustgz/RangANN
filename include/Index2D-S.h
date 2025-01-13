@@ -7,8 +7,8 @@
 #include "matrix.h"
 #include "utils.h"
 
-#define HNSW2D_M 16
-#define HNSW2D_efConstruction 200
+#define HNSW2DS_M 16
+#define HNSW2DS_efConstruction 200
 template<typename dist_t> char *hnswlib::HierarchicalNSWStatic<dist_t>::static_base_data_ = NULL;
 
 class Index2DS {
@@ -50,7 +50,7 @@ public:
     void load_single_static_index(hnswlib::HierarchicalNSWStatic<float> *&appr_alg, std::ifstream &fin,
                                   hnswlib::tableint L, hnswlib::tableint R) {
         auto l2space = new hnswlib::L2Space(D);
-        appr_alg = new hnswlib::HierarchicalNSWStatic<float>(l2space, (R - L + 1), HNSW2D_M, HNSW2D_efConstruction);
+        appr_alg = new hnswlib::HierarchicalNSWStatic<float>(l2space, (R - L + 1), HNSW2DS_M, HNSW2DS_efConstruction);
         fin.read((char *) &appr_alg->enterpoint_node_, sizeof(unsigned int));
         fin.read((char *) &appr_alg->maxlevel_, sizeof(unsigned int));
         appr_alg->cur_element_count = (R - L + 1);
@@ -69,7 +69,6 @@ public:
                 }
                 fin.read(appr_alg->linkLists_[j], linkListSize);
             }
-
         }
         fin.read((char *) appr_alg->data_level0_memory_,
                  appr_alg->cur_element_count * appr_alg->size_data_per_element_);
@@ -88,22 +87,19 @@ public:
             level_index[level].resize(index_count);
             size_t id_begin = 0;
             for (int cur = 0; cur < index_count; cur++) {
-                auto l2space = new hnswlib::L2Space(D);
-                auto index = new hnswlib::HierarchicalNSWStatic<float>(l2space, N, HNSW2D_M,
-                                                                       HNSW2D_efConstruction);
                 unsigned index_length = length;
                 if (id_begin + index_length > N) {
                     index_length = N - id_begin;
                 }
-                std::cerr<<"build range:: "<<id_begin<<" "<<id_begin+index_length<<std::endl;
+                auto l2space = new hnswlib::L2Space(D);
+                auto index = new hnswlib::HierarchicalNSWStatic<float>(l2space, index_length, HNSW2DS_M,
+                                                                       HNSW2DS_efConstruction);
                 index->label_begin_ = id_begin;
 #pragma omp parallel for
                 for (hnswlib::labeltype i = 0; i < index_length; i++) {
                     index->addPoint(
-                            hnswlib::HierarchicalNSWStatic<float>::static_base_data_ + i * index->data_size_, i);
+                            hnswlib::HierarchicalNSWStatic<float>::static_base_data_ + (i+id_begin) * index->data_size_, i);
                 }
-                level_range[level].emplace_back(id_begin);
-                level_index[level].push_back(index);
                 save_single_static_index(index, fout);
                 id_begin += delta;
             }
@@ -125,14 +121,11 @@ public:
             level_index[level].resize(index_count);
             size_t id_begin = 0;
             for (int cur = 0; cur < index_count; cur++) {
-                auto l2space = new hnswlib::L2Space(D);
-                auto index = new hnswlib::HierarchicalNSWStatic<float>(l2space, N, HNSW2D_M,
-                                                                       HNSW2D_efConstruction);
-                index->label_begin_ = id_begin;
                 unsigned index_length = length;
                 if (id_begin + index_length > N) {
                     index_length = N - id_begin;
                 }
+                hnswlib::HierarchicalNSWStatic<float> *index = nullptr;
                 load_single_static_index(index, fin, id_begin, id_begin + index_length - 1);
                 level_range[level].push_back(id_begin);
                 level_index[level].push_back(index);

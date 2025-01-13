@@ -1,3 +1,3 @@
-#export datasets=("sift" "gist" "deep" "deep100M")
-export datasets=("deep")
+#export datasets=("sift" "gist" "deep" "glove100d")
+export datasets=("sift" "deep" "glove100d" "WIT")
 export store_path=/DATA

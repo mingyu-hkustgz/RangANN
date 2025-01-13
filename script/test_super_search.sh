@@ -1,7 +1,7 @@
 source set.sh
 
 for data in "${datasets[@]}"; do
-  for L in {125000,62500}; do
+  for L in {500000,250000,125000,62500,31250,15625,7812,3906}; do
     if [ $data == "sift" ]; then
       E=1
     elif [ $data == "deep" ]; then

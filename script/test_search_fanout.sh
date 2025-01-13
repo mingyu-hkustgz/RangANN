@@ -1,7 +1,7 @@
 source set.sh
 
 for data in "${datasets[@]}"; do
-  for L in {5000000,1000000}; do
+  for L in {500000,250000,125000,62500,31250,15625,7812,3906}; do
     if [ $data == "sift" ]; then
       E=1
     elif [ $data == "deep" ]; then
@@ -17,12 +17,6 @@ for data in "${datasets[@]}"; do
     elif [ $data == "sift100m" ]; then
       E=20
     fi
-
-  ./build/src/test_search_hnsw2DF -d ${data} -s "${store_path}/${data}/" -l $L -k 1 -e $E -f 16
-
-  ./build/src/test_search_hnsw2DF -d ${data} -s "${store_path}/${data}/" -l $L -k 10 -e $E -f 8
-
-  ./build/src/test_search_hnsw2DF -d ${data} -s "${store_path}/${data}/" -l $L -k 10 -e $E -f 4
 
   ./build/src/test_search_hnsw2DF -d ${data} -s "${store_path}/${data}/" -l $L -k 10 -e $E -f 2
 

@@ -25,11 +25,15 @@
 ## Baseline Notice
 * HBI1D--ESG1D in our paper
 * HBI2D--ESG2D in our paper
+* HBI2D{%d}--ESG2D with large fanout
 * SEG  Segment Tree-based method
+* HBI2DS SuperPostFiltering with elastic factor of 1/2
+  * The elastic factor is fixed
 
 ## Index Size Note
-* For HBI1D-ESG1D we redundant store base vectors to keep with the origin hnswlib memory layout
-* For HBI2D-ESG2D we provide a static version of hnswlib that allow the share of same base vectors 
+* For HBI1D--ESG1D we redundant store base vectors to keep with the origin hnswlib memory layout
+* For HBI2D--ESG2D we provide a static version of hnswlib that allow the share of same base vectors 
+* The HBI2D{%d}--ESG2D build the top layer, and HBI2D--ESG2D remove the top layer for fast index
 
 ## Evaluation Note
 * We found that there are duplicate points in data sets such as sift, so we judge that if the distance between the returned nearest neighbor (Top 1) and the groundtruth relative to the query is almost the same (<1e-4), we also consider that the nearest neighbor has been found.
