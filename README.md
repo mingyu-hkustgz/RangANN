@@ -35,7 +35,12 @@
 * For HBI2D--ESG2D we provide a static version of hnswlib that allow the share of same base vectors 
 * The HBI2D{%d}--ESG2D build the top layer, and HBI2D--ESG2D remove the top layer for fast index
 
+## Index Parameter Set
+* The efconstruct and M are set by definition in ./include/Index*.h
+  * Default parameter is M=16 and efconstruct=200
+
 ## Evaluation Note
-* We found that there are duplicate points in data sets such as sift, so we judge that if the distance between the returned nearest neighbor (Top 1) and the groundtruth relative to the query is almost the same (<1e-4), we also consider that the nearest neighbor has been found.
+* We found that there are duplicate points in data sets such as sift, so we judge that if the distance between the returned nearest neighbor (Top 1) and the groundtruth relative to the query is almost the same (relative error < 0.01%), we also consider that the nearest neighbor has been found
+  * (we also use the same strategy for SERF and IRANGE).
 * For Top k, we still use the original recall calculation method
 
