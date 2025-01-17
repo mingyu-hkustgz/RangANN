@@ -17,8 +17,6 @@
 #include <cstring>
 #include <random>
 #include <sstream>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/unordered_map.hpp>
 #include <stack>
 #include <x86intrin.h>
 #include <immintrin.h>
@@ -26,7 +24,6 @@
 #include <set>
 #include <cmath>
 #include <queue>
-#include <Eigen/Dense>
 #include "hnswlib/hnswlib.h"
 
 #ifndef WIN32
@@ -155,16 +152,23 @@ ResultQueue bruteforce_range_search(SegQuery Q, float *base, unsigned D, unsigne
     return res;
 }
 
-void generata_range_ground_truth_with_fix_length(unsigned query_num, unsigned base_num, unsigned length,
+void generata_range_ground_truth_with_fix_length(unsigned query_num, unsigned base_num, int length,
                                                  unsigned D, unsigned K, float *base, float *query,
                                                  std::vector<SegQuery> &Q, std::vector<std::vector<unsigned >> &gt) {
     Q.resize(query_num);
     gt.resize(query_num);
     for (int i = 0; i < query_num; i++) {
-        unsigned L = 0;
-        if(length!=base_num)
-            L = rand() %(base_num - length);
-        unsigned R = L + length - 1;
+        unsigned L = 0, R = 0;
+        if(length>0){
+            if(length!=base_num)
+                L = rand() %(base_num - length);
+            R = L + length - 1;
+        }else{
+            L = rand()%base_num;
+            R = rand()%base_num;
+            if(L > R) std::swap(L,R);
+        }
+
         Q[i].L = L;
         Q[i].R = R;
         Q[i].data_ = query + i * D;
@@ -180,14 +184,17 @@ void generata_range_ground_truth_with_fix_length(unsigned query_num, unsigned ba
     std::cerr<<"Ground Truth Finished"<<std::endl;
 }
 
-void generata_half_range_ground_truth_with_fix_length(unsigned query_num, unsigned length,
+void generata_half_range_ground_truth_with_fix_length(unsigned query_num, unsigned base_num, int length,
                                                  unsigned D, unsigned K, float *base, float *query,
                                                  std::vector<SegQuery> &Q, std::vector<std::vector<unsigned >> &gt) {
     Q.resize(query_num);
     gt.resize(query_num);
     for (int i = 0; i < query_num; i++) {
-        unsigned L = 0;
-        unsigned R = (length-1);
+        unsigned L = 0, R = 0;
+        if(length > 0)
+            R = (length-1);
+        else
+            R = rand()%base_num;
         Q[i].L = L;
         Q[i].R = R;
         Q[i].data_ = query + i * D;

@@ -190,7 +190,7 @@ public:
 
     std::priority_queue<std::pair<float, hnswlib::labeltype> >
     half_blood_search(SegQuery Q, unsigned K, unsigned nprobs, FanoutTree *&cur) {
-        if (cur->L <= Q.L && Q.R <= cur->R && (Q.R - Q.L) * Fanout > (cur->R - cur->L + 1)) {
+        if (cur->L <= Q.L && Q.R <= cur->R && (Q.R - Q.L + 1) * Fanout >= (cur->R - cur->L + 1)) {
             RangeFilter range(Q.L - cur->L, Q.R - cur->L);
             cur->appr_alg->setEf(nprobs);
             return cur->appr_alg->searchKnn(Q.data_, K, &range);

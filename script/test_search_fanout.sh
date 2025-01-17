@@ -1,14 +1,16 @@
 source set.sh
 
 for data in "${datasets[@]}"; do
-  for L in {500000,250000,125000,62500,31250,15625,7812,3906}; do
+  for L in {500000,250000,125000,62500,31250,15625,7812,3906,0}; do
     if [ $data == "sift" ]; then
       E=1
     elif [ $data == "deep" ]; then
       E=5
     elif [ $data == "WIT" ]; then
       E=10
-    elif [ $data == "audio" ]; then
+    elif [ $data == "msmarc-small" ]; then
+      E=10
+    elif [ $data == "rgb" ]; then
       E=10
     elif [ $data == "glove100d" ]; then
       E=100

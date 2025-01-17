@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
     int ind;
     int iarg = 0;
-    unsigned length_bound = 1000, K, ef_base;
+    int length_bound = 1000, K, ef_base;
     opterr = 1;    //getopt error message (off: 0)
 
     char dataset[256] = "";
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     std::vector<SegQuery> SegQVec;
     std::vector<std::vector<unsigned>> gt;
     unsigned query_num = 1000;
-    generata_half_range_ground_truth_with_fix_length(query_num, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
+    generata_half_range_ground_truth_with_fix_length(query_num, X.n, length_bound, Q.d, K, X.data, Q.data, SegQVec, gt);
     std::vector efSearch{1, 2, 4, 8, 16, 32, 50, 64, 128, 150, 256, 300};
     for (auto ef: efSearch) {
         ef *= ef_base;

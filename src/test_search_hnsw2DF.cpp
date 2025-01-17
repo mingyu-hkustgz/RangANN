@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
     int ind;
     int iarg = 0;
-    unsigned length_bound = 1000, K, ef_base, fan;
+    int length_bound = 1000, K, ef_base, fan;
     opterr = 1;    //getopt error message (off: 0)
 
     char dataset[256] = "";

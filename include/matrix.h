@@ -16,8 +16,6 @@
 #include <random>
 #include <cstring>
 #include <assert.h>
-#include <Eigen/Dense>
-#include <Eigen/Core>
 #include <omp.h>
 
 template<typename T>
@@ -258,31 +256,6 @@ void Matrix<T>::mul(const Matrix<T> &A, Matrix<T> &result) const {
     }
 }
 
-template<typename T>
-Matrix<T> mul(const Matrix<T> &A, const Matrix<T> &B) {
-
-    std::cerr << "Matrix Multiplication - " << A.n << " " << A.d << " " << B.d << std::endl;
-    Eigen::MatrixXd _A(A.n, A.d);
-    Eigen::MatrixXd _B(B.n, B.d);
-    Eigen::MatrixXd _C(A.n, B.d);
-    for (int i = 0; i < A.n; i++)
-        for (int j = 0; j < A.d; j++)
-            _A(i, j) = A.data[i * A.d + j];
-
-    for (int i = 0; i < B.n; i++)
-        for (int j = 0; j < B.d; j++)
-            _B(i, j) = B.data[i * B.d + j];
-
-    _C = _A * _B;
-
-    Matrix<T> result(A.n, B.d);
-
-    for (int i = 0; i < A.n; i++)
-        for (int j = 0; j < B.d; j++)
-            result.data[i * B.d + j] = _C(i, j);
-
-    return result;
-}
 
 template<typename T>
 Matrix<T> cen(const Matrix<T> &A, const Matrix<T> &B) {
@@ -296,34 +269,6 @@ Matrix<T> cen(const Matrix<T> &A, const Matrix<T> &B) {
     return result;
 }
 
-template<typename T>
-Matrix<T> para_mul(const Matrix<T> &A, const Matrix<T> &B) {
-
-    std::cerr << "Parallel Matrix Multiplication - " << A.n << " " << A.d << " " << B.d << std::endl;
-    Eigen::MatrixXd _A(A.n, A.d);
-    Eigen::MatrixXd _B(B.n, B.d);
-    Eigen::MatrixXd _C(A.n, B.d);
-#pragma omp parallel for
-    for (int i = 0; i < A.n; i++)
-        for (int j = 0; j < A.d; j++)
-            _A(i, j) = A.data[i * A.d + j];
-
-#pragma omp parallel for
-    for (int i = 0; i < B.n; i++)
-        for (int j = 0; j < B.d; j++)
-            _B(i, j) = B.data[i * B.d + j];
-
-    _C = _A * _B;
-
-    Matrix<T> result(A.n, B.d);
-
-#pragma omp parallel for
-    for (int i = 0; i < A.n; i++)
-        for (int j = 0; j < B.d; j++)
-            result.data[i * B.d + j] = _C(i, j);
-
-    return result;
-}
 
 template<typename T>
 Matrix<T> resize_matrix(const Matrix<T> &A, uint32_t _n, uint32_t _d) {
@@ -359,15 +304,6 @@ void Matrix<T>::deserialize(FILE *fp) {
     fread(data, size, n * d, fp);
 }
 
-double normalize(float *x, unsigned D) {
-    Eigen::VectorXd v(D);
-    for (int i = 0; i < D; i++)v(i) = x[i];
-
-    double norm = v.norm();
-    v.normalize();
-    for (int i = 0; i < D; i++)x[i] = v(i);
-    return norm;
-}
 
 
 #endif
