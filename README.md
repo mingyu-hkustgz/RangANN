@@ -23,7 +23,7 @@
 
 ## RANGE
 * We use a range set [500000,250000,125000,62500,31250,15625,7812,3906,0] to evaluate one million scale dataset
-  * 0 is the mix range mode that random set left and right bound
+  * 0 is the mix range mode that random sets left and right bound
 
 ## Baseline Notice
 * HBI1D--ESG1D in our paper
@@ -40,7 +40,7 @@
     * Interestingly, splitting the top layer into two parts sometimes works better and sometimes doesn't
 ## Index Parameter Set
 * The efconstruct and M are set by definition in ./include/Index*.h
-  * Default parameter is M=16 and efconstruct=200
+  * Default parameter is M=16 and efconstruct=200 (All baselines use the same parameter)
 
 ## Evaluation Note
 * We found that there are duplicate points in data sets such as sift, so we judge that if the distance between the returned nearest neighbor (Top 1) and the groundtruth relative to the query is almost the same (relative error < 0.01%), we also consider that the nearest neighbor has been found
